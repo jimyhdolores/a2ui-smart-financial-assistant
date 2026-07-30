@@ -1,0 +1,83 @@
+<mat-card class="report" appearance="outlined">
+  <div class="report-head">
+    <mat-icon class="head-icon">bar_chart</mat-icon>
+    <h3>{{ title() }}</h3>
+  </div>
+
+  <!-- Fila de KPIs -->
+  <div class="kpis">
+    <div class="kpi">
+      <span class="kpi-label">Gasto del mes</span>
+      <span class="kpi-value">{{ currency() }}{{ total() | number: '1.2-2' }}</span>
+      <span class="kpi-trend" [class]="'kpi-trend ' + direction()">
+        <mat-icon>{{ directionIcon() }}</mat-icon>{{ directionText() }}
+      </span>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">Movimientos</span>
+      <span class="kpi-value">{{ txCount() }}</span>
+      <span class="kpi-trend neutral">este mes</span>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">Mayor categoría</span>
+      <span class="kpi-value small">{{ topCategory() }}</span>
+      <span class="kpi-trend neutral">{{ currency() }}{{ topCategoryTotal() | number: '1.0-0' }}</span>
+    </div>
+  </div>
+
+  <!-- Dona por categoría -->
+  @if (categories().length) {
+    <section class="block">
+      <h4>Distribución por categoría</h4>
+      <apx-chart
+        [series]="donut().series"
+        [chart]="donut().chart"
+        [labels]="donut().labels!"
+        [colors]="donut().colors!"
+        [legend]="donut().legend!"
+        [dataLabels]="donut().dataLabels!"
+        [stroke]="donut().stroke!"
+        [plotOptions]="donut().plotOptions!"
+        [tooltip]="donut().tooltip!"
+      ></apx-chart>
+    </section>
+  }
+
+  <!-- Tendencia semanal -->
+  @if (trend().length > 1) {
+    <section class="block">
+      <h4>Tendencia del mes</h4>
+      <apx-chart
+        [series]="area().series"
+        [chart]="area().chart"
+        [colors]="area().colors!"
+        [dataLabels]="area().dataLabels!"
+        [stroke]="area().stroke!"
+        [fill]="area().fill!"
+        [grid]="area().grid!"
+        [xaxis]="area().xaxis!"
+        [yaxis]="area().yaxis!"
+        [tooltip]="area().tooltip!"
+      ></apx-chart>
+    </section>
+  }
+
+  <!-- Top de movimientos -->
+  @if (movements().length) {
+    <section class="block">
+      <h4>Movimientos más grandes</h4>
+      <ul class="mov-list">
+        @for (m of movements(); track m.merchant + m.date) {
+          <li>
+            <mat-icon>{{ m.icon }}</mat-icon>
+            <div class="mov-info">
+              <span class="mov-merchant">{{ m.merchant }}</span>
+              <span class="mov-meta">{{ m.category }} · {{ m.date }}</span>
+            </div>
+            <span class="mov-amount">{{ currency() }}{{ m.amount | number: '1.2-2' }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</mat-card>

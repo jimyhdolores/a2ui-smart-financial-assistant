@@ -1,0 +1,144 @@
+<!-- ── Cabecera de saldo ─────────────────────────────────────────────────── -->
+<mat-card class="balance-card" appearance="outlined">
+  <div class="balance-main">
+    <span class="balance-label">
+      {{ isCredit() ? 'Crédito disponible' : 'Saldo disponible' }}
+    </span>
+    <span class="balance-figure">{{ currency }}{{ available() | number: '1.2-2' }}</span>
+  </div>
+  <div class="balance-stats">
+    <div class="stat">
+      <mat-icon>shopping_cart</mat-icon>
+      <div class="stat-text">
+        <span class="stat-label">Gastado este mes</span>
+        <span class="stat-value">{{ currency }}{{ spent() | number: '1.2-2' }}</span>
+      </div>
+    </div>
+    @if (isCredit()) {
+      <div class="stat">
+        <mat-icon>credit_card</mat-icon>
+        <div class="stat-text">
+          <span class="stat-label">Deuda actual</span>
+          <span class="stat-value">{{ currency }}{{ account().balance | number: '1.2-2' }}</span>
+        </div>
+      </div>
+    }
+  </div>
+</mat-card>
+
+<!-- ── Hero de gastos hormiga (interactivo: incluye el simulador "¿y si…?") ── -->
+<section class="ant-section">
+  <app-ant-expense [data]="antData()" (reduction)="onReduction($event)" />
+</section>
+
+<!-- ── Distribución por categoría + movimientos recientes ────────────────── -->
+<div class="grid">
+  @if (donut(); as d) {
+    <mat-card class="chart-card" appearance="outlined">
+      <div class="card-head">
+        <mat-icon>donut_large</mat-icon>
+        <h3>¿En qué se va tu dinero?</h3>
+      </div>
+      <apx-chart
+        [series]="d.series"
+        [chart]="d.chart"
+        [labels]="d.labels!"
+        [colors]="d.colors!"
+        [legend]="d.legend!"
+        [dataLabels]="d.dataLabels!"
+        [stroke]="d.stroke!"
+        [plotOptions]="d.plotOptions!"
+        [tooltip]="d.tooltip!"
+      ></apx-chart>
+    </mat-card>
+  }
+
+  <mat-card class="recent-card" appearance="outlined">
+    <!-- Cabecera con navegador de mes (‹ Mes Año ›) -->
+    <div class="mov-head">
+      <div class="card-head">
+        <mat-icon>history</mat-icon>
+        <h3>Movimientos</h3>
+      </div>
+      <div class="month-nav">
+        <button
+          matIconButton
+          aria-label="Mes anterior"
+          [disabled]="!canOlder()"
+          (click)="olderMonth()"
+        >
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <span class="month-label">{{ monthLabel() }}</span>
+        <button
+          matIconButton
+          aria-label="Mes siguiente"
+          [disabled]="!canNewer()"
+          (click)="newerMonth()"
+        >
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Resumen del mes visible -->
+    <div class="mov-summary">
+      <span>{{ monthRows().length }} movimiento{{ monthRows().length === 1 ? '' : 's' }}</span>
+      <span class="mov-spent">
+        Gasto del mes: <strong>{{ currency }}{{ monthSpent() | number: '1.2-2' }}</strong>
+      </span>
+    </div>
+
+    @if (monthRows().length) {
+      <ul class="recent-list">
+        @for (r of pagedRows(); track r.id) {
+          <li>
+            <span class="r-icon"><mat-icon>{{ r.icon }}</mat-icon></span>
+            <div class="r-info">
+              <span class="r-merchant">
+                {{ r.merchant }}
+                @if (r.isAnt) { <span class="ant-tag">🐜</span> }
+              </span>
+              <span class="r-meta">
+                {{ r.date }} ·
+                <mat-icon class="r-method">{{ r.methodIcon }}</mat-icon>
+                {{ r.methodLabel }} · {{ r.category }}
+              </span>
+            </div>
+            <span class="r-amount" [class.income]="r.isIncome">
+              {{ r.isIncome ? '+' : '−' }}{{ currency }}{{ r.amount | number: '1.2-2' }}
+            </span>
+          </li>
+        }
+      </ul>
+
+      <!-- Pager (‹ Página X de Y ›) -->
+      @if (pageCount() > 1) {
+        <div class="pager">
+          <button
+            matIconButton
+            aria-label="Página anterior"
+            [disabled]="pageIndex() === 0"
+            (click)="prevPage()"
+          >
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <span class="pager-label">Página {{ pageIndex() + 1 }} de {{ pageCount() }}</span>
+          <button
+            matIconButton
+            aria-label="Página siguiente"
+            [disabled]="pageIndex() === pageCount() - 1"
+            (click)="nextPage()"
+          >
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      }
+    } @else {
+      <div class="empty">
+        <mat-icon>calendar_month</mat-icon>
+        <span>Sin movimientos en {{ monthLabel() }}.</span>
+      </div>
+    }
+  </mat-card>
+</div>

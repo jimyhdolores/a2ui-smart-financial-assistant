@@ -1,0 +1,216 @@
+:host {
+  display: block;
+}
+
+.credit {
+  padding: 1.25rem;
+  border-left: 5px solid #7c5cfc;
+}
+
+.credit-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+
+  .head-left {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .head-icon {
+    color: #7c5cfc;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.125rem;
+  }
+}
+
+.risk-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+
+  &.low { background: color-mix(in srgb, #2e7d32 15%, transparent); color: #2e7d32; }
+  &.medium { background: color-mix(in srgb, #f59e0b 18%, transparent); color: #b26a00; }
+  &.high { background: color-mix(in srgb, #d32f2f 15%, transparent); color: #d32f2f; }
+}
+
+.credit-body {
+  display: grid;
+  grid-template-columns: minmax(0, 200px) 1fr;
+  align-items: center;
+  gap: 1rem;
+}
+
+.gauge-wrap {
+  display: grid;
+  place-items: center;
+}
+
+.credit-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 10px;
+  background: var(--mat-sys-surface-container-high);
+
+  .m-label {
+    font-size: 0.75rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .m-value {
+    font-size: 1.125rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+
+    &.ok {
+      color: #2e7d32;
+    }
+  }
+}
+
+.usage {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+
+  .usage-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8125rem;
+    color: var(--mat-sys-on-surface-variant);
+
+    strong {
+      color: var(--mat-sys-on-surface);
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .usage-track {
+    height: 10px;
+    border-radius: 999px;
+    background: var(--mat-sys-surface-container-highest);
+    overflow: hidden;
+  }
+
+  .usage-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.5s ease;
+
+    &.low { background: #2e7d32; }
+    &.medium { background: #f59e0b; }
+    &.high { background: #d32f2f; }
+  }
+
+  .usage-limit {
+    font-size: 0.75rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.simulation {
+  margin-top: 1rem;
+  padding: 0.875rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container-high);
+
+  --sim-accent: #64748b;
+  &.good { --sim-accent: #2e7d32; }
+  &.tight { --sim-accent: #f59e0b; }
+  &.risky { --sim-accent: #d32f2f; }
+
+  border-left: 4px solid var(--sim-accent);
+
+  .sim-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+
+    mat-icon {
+      color: var(--sim-accent);
+    }
+
+    .sim-verdict {
+      font-weight: 700;
+      color: var(--sim-accent);
+    }
+  }
+
+  .sim-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .sim-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+
+    .sc-label {
+      font-size: 0.7rem;
+      color: var(--mat-sys-on-surface-variant);
+    }
+
+    .sc-value {
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+
+      &.big {
+        font-size: 1.25rem;
+        color: var(--sim-accent);
+      }
+    }
+
+    .sc-hint {
+      font-size: 0.7rem;
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+}
+
+.recommendation {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0.75rem 0.875rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  background: color-mix(in srgb, #7c5cfc 8%, transparent);
+
+  mat-icon {
+    color: #7c5cfc;
+    flex-shrink: 0;
+    font-size: 1.2rem;
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .credit-body {
+    grid-template-columns: 1fr;
+  }
+}

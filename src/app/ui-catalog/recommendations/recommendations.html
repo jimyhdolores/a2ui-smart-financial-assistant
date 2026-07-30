@@ -1,0 +1,42 @@
+<mat-card class="recos" appearance="outlined">
+  <div class="recos-head">
+    <div class="head-left">
+      <mat-icon class="head-icon">lightbulb</mat-icon>
+      <h3>{{ title() }}</h3>
+    </div>
+    <span class="risk-chip" [class]="'risk-chip ' + riskLevel()">
+      <mat-icon>{{ riskIcon() }}</mat-icon>{{ riskLabel() }}
+    </span>
+  </div>
+
+  @if (potentialTotal() > 0) {
+    <div class="potential">
+      <mat-icon>savings</mat-icon>
+      <span>Podrías liberar hasta <strong>{{ currency() }}{{ potentialTotal() | number: '1.0-0' }}</strong> al mes</span>
+    </div>
+  }
+
+  <!-- Alertas -->
+  @for (a of alerts(); track a.text) {
+    <div class="alert">
+      <mat-icon>{{ a.icon }}</mat-icon>
+      <span>{{ a.text }}</span>
+    </div>
+  }
+
+  <!-- Consejos -->
+  <div class="tips">
+    @for (t of tips(); track t.title) {
+      <div class="tip">
+        <div class="tip-icon"><mat-icon>{{ t.icon }}</mat-icon></div>
+        <div class="tip-body">
+          <span class="tip-title">{{ t.title }}</span>
+          <span class="tip-detail">{{ t.detail }}</span>
+        </div>
+        @if (t.impact > 0) {
+          <span class="tip-impact">+{{ currency() }}{{ t.impact | number: '1.0-0' }}</span>
+        }
+      </div>
+    }
+  </div>
+</mat-card>
