@@ -1,0 +1,13 @@
+<mat-card class="answer" appearance="outlined">
+  <div class="head">
+    <mat-icon>chat_bubble</mat-icon>
+    <span>Respuesta</span>
+  </div>
+  @if (paragraphs().length) {
+    @for (p of paragraphs(); track $index) {
+      <p class="line">{{ p }}</p>
+    }
+  } @else {
+    <p class="line placeholder">Pensando…</p>
+  }
+</mat-card>

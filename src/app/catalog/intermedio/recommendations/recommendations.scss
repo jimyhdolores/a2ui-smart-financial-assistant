@@ -1,0 +1,137 @@
+:host {
+  display: block;
+}
+
+.recos {
+  padding: 1.25rem;
+  border-left: 5px solid var(--mat-sys-tertiary);
+}
+
+.recos-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.875rem;
+
+  .head-left {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .head-icon {
+    color: var(--mat-sys-tertiary);
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.125rem;
+  }
+}
+
+.risk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+
+  mat-icon {
+    font-size: 1.05rem;
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  &.low { background: color-mix(in srgb, #2e7d32 15%, transparent); color: #2e7d32; }
+  &.medium { background: color-mix(in srgb, #f59e0b 18%, transparent); color: #b26a00; }
+  &.high { background: color-mix(in srgb, #d32f2f 15%, transparent); color: #d32f2f; }
+}
+
+.potential {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  margin-bottom: 0.875rem;
+  background: color-mix(in srgb, var(--mat-sys-primary) 10%, transparent);
+  color: var(--mat-sys-on-surface);
+
+  mat-icon {
+    color: var(--mat-sys-primary);
+  }
+
+  strong {
+    color: var(--mat-sys-primary);
+  }
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 10px;
+  margin-bottom: 0.625rem;
+  font-size: 0.875rem;
+  background: color-mix(in srgb, #d32f2f 8%, transparent);
+  border: 1px solid color-mix(in srgb, #d32f2f 25%, transparent);
+
+  mat-icon {
+    color: #d32f2f;
+    flex-shrink: 0;
+  }
+}
+
+.tips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.tip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container-high);
+
+  .tip-icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--mat-sys-tertiary) 16%, transparent);
+    color: var(--mat-sys-tertiary);
+  }
+
+  .tip-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .tip-title {
+    font-weight: 600;
+  }
+
+  .tip-detail {
+    font-size: 0.8125rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .tip-impact {
+    font-weight: 700;
+    color: #2e7d32;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}

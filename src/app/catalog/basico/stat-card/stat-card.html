@@ -1,0 +1,12 @@
+<mat-card class="stat" appearance="outlined">
+  <div class="avatar">
+    <mat-icon>{{ icon() }}</mat-icon>
+  </div>
+  <div class="body">
+    <span class="label">{{ label() }}</span>
+    <span class="value">{{ currency() }}{{ value() | number: '1.2-2' }}</span>
+    @if (hint()) {
+      <span class="hint">{{ hint() }}</span>
+    }
+  </div>
+</mat-card>

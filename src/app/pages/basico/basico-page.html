@@ -1,0 +1,133 @@
+<div class="chat">
+  <!-- ── Historial de mensajes ─────────────────────────────────────────────── -->
+  <div class="messages" #scroller>
+    @if (messages().length === 0) {
+      <!-- Estado inicial: bienvenida didáctica + sugerencias -->
+      <div class="welcome">
+        <div class="welcome-icon"><mat-icon>school</mat-icon></div>
+        <h2>Nivel 1 · Gemini Nano decide la interfaz</h2>
+        <p>
+          El pipeline de <strong>Generative UI</strong> en su forma más simple: tu pregunta va a
+          Gemini Nano <em>en tu dispositivo</em>, que elige <strong>uno de tres componentes</strong>
+          (un dato, una lista o una respuesta de texto). Los números los calcula TypeScript — la IA
+          solo decide <em>qué mostrar</em>. Sin gráficos, sin protocolo A2UI todavía.
+        </p>
+        <div class="suggest-grid">
+          @for (s of suggestions; track s.query) {
+            <button matButton="outlined" class="suggest-card" (click)="sendSuggestion(s)">
+              <mat-icon>{{ s.icon }}</mat-icon>
+              <span>{{ s.label }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    @for (m of messages(); track $index) {
+      @if (m.role === 'user') {
+        <div class="msg user">
+          <div class="bubble">{{ m.text }}</div>
+        </div>
+      } @else {
+        <div class="msg assistant">
+          <div class="avatar"><mat-icon>smart_toy</mat-icon></div>
+          <div class="assistant-body">
+            @if (m.loading) {
+              <!-- Skeleton mientras el LLM decide el componente -->
+              <div class="skeleton">
+                <span class="sk-line w70"></span>
+                <span class="sk-line w90"></span>
+                <span class="sk-line w40"></span>
+              </div>
+              <span class="thinking">Gemini Nano está eligiendo el componente…</span>
+            } @else if (m.error) {
+              <div class="msg-error">
+                <mat-icon>error</mat-icon>
+                <div>
+                  <strong>No pude responder</strong>
+                  <p>{{ m.error }}</p>
+                </div>
+              </div>
+            } @else if (m.decision) {
+              <!-- Etiqueta: qué componente eligió el modelo -->
+              <span class="chosen">
+                <mat-icon>widgets</mat-icon>
+                Nano eligió: <strong>{{ m.decision.componentToRender }}</strong>
+              </span>
+
+              <!-- 🎨 Componente generado (NgComponentOutlet) -->
+              <div class="generated">
+                <ng-container
+                  [ngComponentOutlet]="registry[m.decision.componentToRender]"
+                  [ngComponentOutletInputs]="{ data: m.data }"
+                ></ng-container>
+              </div>
+
+              <!-- Telemetría + JSON didáctico -->
+              <div class="msg-foot">
+                @if (m.durationMs != null) {
+                  <span class="ms-badge" title="Sin red — 100% en tu dispositivo">
+                    <mat-icon>bolt</mat-icon>
+                    {{ m.durationMs }} ms · on-device
+                  </span>
+                }
+                <details class="a2ui-json">
+                  <summary>Ver cómo decidió Nano</summary>
+                  @if (m.raw) {
+                    <p class="json-label">Salida cruda del modelo:</p>
+                    <pre>{{ m.raw }}</pre>
+                  }
+                  <p class="json-label">Decisión (componente + params):</p>
+                  <pre>{{ m.decision | json }}</pre>
+                </details>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- ── Compositor ────────────────────────────────────────────────────────── -->
+  <div class="composer">
+    @if (messages().length > 0) {
+      <div class="chip-strip">
+        @for (s of suggestions; track s.query) {
+          <button class="chip" [disabled]="busy()" (click)="sendSuggestion(s)">
+            <mat-icon>{{ s.icon }}</mat-icon>{{ s.label }}
+          </button>
+        }
+      </div>
+    }
+
+    <form class="composer-row" (ngSubmit)="submit()">
+      <mat-form-field appearance="outline" class="composer-field" subscriptSizing="dynamic">
+        <mat-label>Escribe tu pregunta…</mat-label>
+        <input
+          matInput
+          [(ngModel)]="input"
+          name="basicoInput"
+          [disabled]="busy() || !ai.isSupported()"
+          autocomplete="off"
+        />
+        <mat-icon matSuffix>chat</mat-icon>
+      </mat-form-field>
+      <button
+        matButton="filled"
+        type="submit"
+        class="send-btn"
+        [disabled]="busy() || !input().trim() || !ai.isSupported()"
+      >
+        <mat-icon>{{ busy() ? 'hourglass_top' : 'send' }}</mat-icon>
+      </button>
+    </form>
+
+    @if (!ai.isSupported()) {
+      <p class="unsupported">
+        <mat-icon>info</mat-icon>
+        Este navegador no expone la Prompt API de Chrome. Usa Chrome de escritorio 148+ (o 138+
+        con los flags de IA integrada activados).
+      </p>
+    }
+  </div>
+</div>

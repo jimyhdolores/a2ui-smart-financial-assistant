@@ -1,0 +1,92 @@
+<mat-card class="credit" appearance="outlined">
+  <div class="credit-head">
+    <div class="head-left">
+      <mat-icon class="head-icon">credit_card</mat-icon>
+      <h3>{{ title() }}</h3>
+    </div>
+    <span class="risk-chip" [class]="'risk-chip ' + riskLevel()">{{ riskLabel() }}</span>
+  </div>
+
+  <div class="credit-body">
+    <!-- Gauge de capacidad de pago -->
+    <div class="gauge-wrap">
+      <apx-chart
+        [series]="gauge().series"
+        [chart]="gauge().chart"
+        [labels]="gauge().labels!"
+        [colors]="gauge().colors!"
+        [plotOptions]="gauge().plotOptions!"
+        [stroke]="gauge().stroke!"
+      ></apx-chart>
+    </div>
+
+    <!-- Métricas de la línea de crédito -->
+    <div class="credit-metrics">
+      <div class="metric">
+        <span class="m-label">Disponible</span>
+        <span class="m-value ok">{{ currency() }}{{ available() | number: '1.0-0' }}</span>
+      </div>
+      <div class="metric">
+        <span class="m-label">Usado</span>
+        <span class="m-value">{{ currency() }}{{ debt() | number: '1.0-0' }}</span>
+      </div>
+      <div class="metric">
+        <span class="m-label">Pago mínimo</span>
+        <span class="m-value">{{ currency() }}{{ minPayment() | number: '1.0-2' }}</span>
+      </div>
+
+      <div class="usage">
+        <div class="usage-top">
+          <span>Uso de tu línea</span>
+          <strong>{{ usagePct() | number: '1.0-0' }}%</strong>
+        </div>
+        <div class="usage-track">
+          <div
+            class="usage-fill"
+            [class]="riskLevel()"
+            [style.width.%]="usagePct()"
+          ></div>
+        </div>
+        <span class="usage-limit">Límite {{ currency() }}{{ limit() | number: '1.0-0' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simulación de compra a crédito (si el usuario preguntó por una) -->
+  @if (hasSimulation()) {
+    <div class="simulation" [class]="'simulation ' + verdict()">
+      <div class="sim-head">
+        <mat-icon>{{ verdictIcon() }}</mat-icon>
+        <span class="sim-verdict">{{ verdictLabel() }}</span>
+      </div>
+      <div class="sim-grid">
+        @if (product()) {
+          <div class="sim-cell">
+            <span class="sc-label">Producto</span>
+            <span class="sc-value">{{ product() }}</span>
+          </div>
+        }
+        <div class="sim-cell">
+          <span class="sc-label">Precio</span>
+          <span class="sc-value">{{ currency() }}{{ price() | number: '1.0-0' }}</span>
+        </div>
+        <div class="sim-cell">
+          <span class="sc-label">Cuota / mes</span>
+          <span class="sc-value big">{{ currency() }}{{ monthlyPayment() | number: '1.0-2' }}</span>
+          <span class="sc-hint">a {{ months() }} meses</span>
+        </div>
+        <div class="sim-cell">
+          <span class="sc-label">Peso en tu ingreso</span>
+          <span class="sc-value">{{ dti() | number: '1.0-0' }}%</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (recommendation()) {
+    <p class="recommendation">
+      <mat-icon>tips_and_updates</mat-icon>
+      <span>{{ recommendation() }}</span>
+    </p>
+  }
+</mat-card>

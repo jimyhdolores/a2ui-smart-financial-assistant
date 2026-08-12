@@ -1,0 +1,63 @@
+<mat-card class="savings" appearance="outlined">
+  <div class="savings-head">
+    <mat-icon class="head-icon">flag</mat-icon>
+    <h3>{{ title() }}</h3>
+  </div>
+
+  <div class="savings-body">
+    <!-- Progreso radial hacia la meta -->
+    <div class="radial-wrap">
+      <apx-chart
+        [series]="radial().series"
+        [chart]="radial().chart"
+        [labels]="radial().labels!"
+        [colors]="radial().colors!"
+        [plotOptions]="radial().plotOptions!"
+        [fill]="radial().fill!"
+        [stroke]="radial().stroke!"
+      ></apx-chart>
+      <div class="goal-figures">
+        <span class="goal-current">{{ currency() }}{{ goalCurrent() | number: '1.0-0' }}</span>
+        <span class="goal-target">de {{ currency() }}{{ goalTarget() | number: '1.0-0' }}</span>
+      </div>
+    </div>
+
+    <!-- Ahorro potencial + resumen -->
+    <div class="savings-side">
+      <div class="potential-box">
+        <span class="pb-label">Ahorro mensual potencial</span>
+        <span class="pb-value">{{ currency() }}{{ monthlyPotential() | number: '1.0-0' }}</span>
+        <span class="pb-hint">recortando tus gastos hormiga</span>
+      </div>
+
+      @if (months() > 0) {
+        <p class="savings-note">
+          <mat-icon>schedule</mat-icon>
+          A este ritmo alcanzarías tu meta en
+          <strong>{{ months() }} {{ months() === 1 ? 'mes' : 'meses' }}</strong>.
+        </p>
+      }
+    </div>
+  </div>
+
+  <!-- Proyección a 3 meses -->
+  @if (projection().length) {
+    <div class="projection">
+      <h4>Proyección de ahorro</h4>
+      <div class="bars">
+        @for (p of projection(); track p.label) {
+          <div class="bar-col">
+            <span class="bar-amount">{{ currency() }}{{ p.amount | number: '1.0-0' }}</span>
+            <div class="bar-track">
+              <div
+                class="bar-fill"
+                [style.height.%]="(p.amount / maxProjection()) * 100"
+              ></div>
+            </div>
+            <span class="bar-label">{{ p.label }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</mat-card>

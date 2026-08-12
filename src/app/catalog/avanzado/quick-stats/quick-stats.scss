@@ -1,0 +1,64 @@
+:host {
+  display: block;
+}
+
+.quick {
+  padding: 1rem 1.25rem;
+  border-left: 5px solid var(--mat-sys-primary);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container-high);
+
+  mat-icon {
+    flex-shrink: 0;
+  }
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.stat-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+// Tono (color de acento del icono) según el rol del KPI.
+.tone-neutral mat-icon {
+  color: var(--mat-sys-primary);
+}
+.tone-spend mat-icon {
+  color: #d32f2f;
+}
+.tone-warn mat-icon {
+  color: #f9a825;
+}
+.tone-good mat-icon {
+  color: #2e7d32;
+}
+
+@media (max-width: 560px) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

@@ -322,12 +322,34 @@ export class FinanceAnalyticsService {
         return this.movementsData(account, params);
       case 'AppAntExpense':
         return this.antData(account, this.antVerdictFallback(account));
+      case 'AppQuickStats':
+        return this.quickStatsData(account);
       default:
         return {};
     }
   }
 
   // ─── Constructores de `data` por componente ────────────────────────────────
+
+  /**
+   * Tira compacta de KPIs (cabecera natural de un panel compuesto).
+   * Reúne en cuatro cifras el pulso del mes: cuánto queda, cuánto se gastó,
+   * cuánto pesan los gastos hormiga y cuánto se podría ahorrar recortándolos.
+   */
+  private quickStatsData(account: Account): Record<string, unknown> {
+    const available = this.availableFunds(account);
+    const gasto = this.totalGasto(account, 'current');
+    const ant = this.antExpenses(account, 'current');
+    return {
+      currency: CURRENCY,
+      items: [
+        { icon: 'account_balance_wallet', label: 'Disponible', value: available, tone: 'neutral' },
+        { icon: 'receipt_long', label: 'Gasto del mes', value: gasto, tone: 'spend' },
+        { icon: 'emoji_nature', label: 'Gastos hormiga', value: ant.total, tone: 'warn' },
+        { icon: 'savings', label: 'Ahorro potencial', value: round2(ant.total * 0.5), tone: 'good' },
+      ],
+    };
+  }
 
   /** Datos del hero de gastos hormiga (usado en el resumen y en el chat). */
   antData(

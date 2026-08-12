@@ -1,0 +1,75 @@
+<mat-card class="ant-hero" [class]="'ant-hero ' + status()" appearance="outlined">
+  <div class="hero-head">
+    <div class="avatar">
+      <mat-icon>{{ icon() }}</mat-icon>
+    </div>
+    <div class="head-text">
+      <span class="eyebrow">🐜 Gastos hormiga</span>
+      <h3>{{ headline() }}</h3>
+    </div>
+  </div>
+
+  <!-- Cifra protagonista -->
+  <div class="hero-figure">
+    <span class="figure-label">Hasta hoy has gastado</span>
+    <span class="figure-amount">{{ currency() }}{{ antTotal() | number: '1.0-0' }}</span>
+    <span class="figure-sub">en {{ antCount() }} compras pequeñas este mes</span>
+  </div>
+
+  <!-- Comparación mes a mes -->
+  <div class="mom" [class]="'mom ' + direction()">
+    <mat-icon>{{ directionIcon() }}</mat-icon>
+    <span>{{ directionText() }}</span>
+    <span class="mom-prev">(antes {{ currency() }}{{ prevTotal() | number: '1.0-0' }})</span>
+  </div>
+
+  @if (message()) {
+    <p class="hero-message">{{ message() }}</p>
+  }
+
+  <!-- Proyección de agotamiento -->
+  <div class="projection">
+    <mat-icon>event_busy</mat-icon>
+    <div>
+      <span class="proj-label">A este ritmo, tu saldo podría agotarse</span>
+      <strong class="proj-range">entre el {{ fromDate() }} y el {{ toDate() }}</strong>
+      <span class="proj-days">≈ {{ daysLeft() }} días de margen</span>
+    </div>
+  </div>
+
+  <!-- Desglose por categoría -->
+  @if (categories().length) {
+    <div class="chart-wrap">
+      <apx-chart
+        [series]="chart().series"
+        [chart]="chart().chart"
+        [colors]="chart().colors!"
+        [plotOptions]="chart().plotOptions!"
+        [dataLabels]="chart().dataLabels!"
+        [grid]="chart().grid!"
+        [xaxis]="chart().xaxis!"
+        [yaxis]="chart().yaxis!"
+        [tooltip]="chart().tooltip!"
+      ></apx-chart>
+    </div>
+  }
+
+  <!-- Simulador "¿y si…?" (solo en el resumen, donde el contenedor escucha el output) -->
+  @if (interactive()) {
+    <div class="simulator">
+      <div class="sim-head">
+        <mat-icon>tune</mat-icon>
+        <span>¿Y si reduzco mis gastos hormiga un <strong>{{ reductionPct() }}%</strong>?</span>
+      </div>
+      <mat-slider min="0" max="80" step="10" discrete showTickMarks>
+        <input
+          matSliderThumb
+          #thumb="matSliderThumb"
+          [value]="reductionPct()"
+          (input)="onSlider(thumb.value)"
+        />
+      </mat-slider>
+      <span class="sim-hint">Mueve el control para ver cómo cambia tu margen (cálculo instantáneo, en tu dispositivo).</span>
+    </div>
+  }
+</mat-card>

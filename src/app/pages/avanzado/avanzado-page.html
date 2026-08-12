@@ -1,0 +1,18 @@
+<!-- preserveContent: mantiene vivo el contenido de cada pestaña (p. ej. el
+     historial del chat y sus superficies A2UI) al cambiar de tab. -->
+<mat-tab-group class="tabs" animationDuration="200ms" mat-stretch-tabs="false" preserveContent>
+  <mat-tab label="Resumen de cuenta">
+    <ng-template matTabContent>
+      <div class="tab-body">
+        <app-account-summary />
+      </div>
+    </ng-template>
+  </mat-tab>
+  <mat-tab label="Asistente IA">
+    <ng-template matTabContent>
+      <div class="tab-body">
+        <app-chat />
+      </div>
+    </ng-template>
+  </mat-tab>
+</mat-tab-group>

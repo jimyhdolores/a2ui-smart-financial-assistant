@@ -1,0 +1,20 @@
+<mat-card class="list" appearance="outlined">
+  <div class="head">
+    <mat-icon>receipt_long</mat-icon>
+    <span>{{ title() }}</span>
+  </div>
+  <mat-list>
+    @for (it of items(); track $index) {
+      <mat-list-item>
+        <mat-icon matListItemIcon>{{ it.icon }}</mat-icon>
+        <span matListItemTitle>{{ it.label }}</span>
+        <span matListItemLine>{{ it.sublabel }}</span>
+        <span matListItemMeta class="amount" [class.income]="it.isIncome">
+          {{ it.isIncome ? '+' : '' }}{{ currency() }}{{ it.amount | number: '1.2-2' }}
+        </span>
+      </mat-list-item>
+    } @empty {
+      <p class="empty">No hay movimientos para mostrar.</p>
+    }
+  </mat-list>
+</mat-card>

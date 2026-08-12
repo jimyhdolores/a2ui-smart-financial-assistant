@@ -17,7 +17,8 @@ export type A2uiComponent =
   | 'AppSavingsPlan' // 🎯 metas de ahorro + progreso + simulación
   | 'AppCreditAdvisor' // 💳 capacidad de crédito + endeudamiento + cuota
   | 'AppMovementsTable' // 📋 tabla de movimientos filtrada
-  | 'AppAntExpense'; // 🐜 análisis de gastos hormiga (hero que cambia de color)
+  | 'AppAntExpense' // 🐜 análisis de gastos hormiga (hero que cambia de color)
+  | 'AppQuickStats'; // 📌 tira compacta de KPIs (cabecera natural de un panel compuesto)
 
 /**
  * Decisión de enrutamiento del LLM.
@@ -40,6 +41,7 @@ export const A2UI_COMPONENTS: readonly A2uiComponent[] = [
   'AppCreditAdvisor',
   'AppMovementsTable',
   'AppAntExpense',
+  'AppQuickStats',
 ] as const;
 
 /**
@@ -48,20 +50,37 @@ export const A2UI_COMPONENTS: readonly A2uiComponent[] = [
  * ✨ En Chrome moderno el modelo queda OBLIGADO a producir exactamente esta
  * estructura (structured output nativo), eliminando casi todos los errores de
  * parseo. `params` se deja abierto porque su forma depende de la intención.
+ *
+ * 🧩 COMPOSICIÓN: la salida es una LISTA de secciones. Una consulta simple
+ * devuelve 1 sección (comportamiento clásico); una consulta de panorama
+ * ("resumen de mi mes") devuelve varias, que la app apila para construir una
+ * interfaz completa. `maxItems` acota el panel para que la demo sea estable.
  */
 export const A2UI_ROUTER_SCHEMA = {
   type: 'object',
   additionalProperties: false,
   properties: {
-    componentToRender: {
-      type: 'string',
-      enum: A2UI_COMPONENTS,
-    },
-    params: {
-      type: 'object',
+    sections: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 4,
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          componentToRender: {
+            type: 'string',
+            enum: A2UI_COMPONENTS,
+          },
+          params: {
+            type: 'object',
+          },
+        },
+        required: ['componentToRender', 'params'],
+      },
     },
   },
-  required: ['componentToRender', 'params'],
+  required: ['sections'],
 } as const;
 
 /** Estados posibles del veredicto de gastos hormiga. */

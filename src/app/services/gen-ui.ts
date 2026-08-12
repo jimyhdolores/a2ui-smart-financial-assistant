@@ -2,39 +2,38 @@ import { Injectable, computed, signal } from '@angular/core';
 import {
   A2UI_COMPONENTS,
   A2UI_ROUTER_SCHEMA,
-  ANT_VERDICT_SCHEMA,
   A2uiComponent,
+  ANT_VERDICT_SCHEMA,
   AntVerdict,
 } from '../models/a2ui.model';
+import {
+  BASICO_COMPONENTS,
+  BASICO_ROUTER_SCHEMA,
+  BasicoComponent,
+  BasicoDecision,
+  BasicoRouteResult,
+} from '../models/basico.model';
 
 /** Estados de disponibilidad normalizados para la UI (`Availability` viene de @types/dom-chromium-ai). */
 type ModelStatus = Availability | 'unsupported';
 
-/** Qué "forma" de la API encontramos en este navegador. */
-type ApiKind = 'modern' | 'legacy';
-
-// --- Tipos mínimos de la API CLÁSICA (window.ai.languageModel) ---
-interface LegacyCapabilities {
-  available: 'readily' | 'after-download' | 'no';
-}
-interface LegacySession {
-  prompt(input: string): Promise<string>;
-  destroy?(): void;
-}
-interface LegacyFactory {
-  capabilities(): Promise<LegacyCapabilities>;
-  create(options: { systemPrompt?: string }): Promise<LegacySession>;
-}
-
-/** Decisión de enrutamiento que produce el LLM: qué componente + parámetros. */
+/** Decisión de enrutamiento de UNA sección: qué componente + parámetros. */
 export interface RouteDecision {
   componentToRender: A2uiComponent;
   params: Record<string, unknown>;
 }
 
+/**
+ * Decisión COMPUESTA: una o varias secciones que se apilan para formar la
+ * interfaz completa. Una consulta simple trae 1 sección; una de panorama, varias.
+ */
+export interface CompositeDecision {
+  sections: RouteDecision[];
+}
+
 /** Resultado de `route()` con telemetría por mensaje. */
 export interface RouteResult {
-  decision: RouteDecision;
+  decision: CompositeDecision;
   raw: string;
   durationMs: number;
 }
@@ -48,13 +47,21 @@ export interface RouteResult {
  * es el componente + los parámetros. NO calcula importes: solo intención.
  */
 const ROUTER_SYSTEM_PROMPT = `Eres un MOTOR DE ENRUTAMIENTO DE INTERFAZ para una app financiera.
-Analizas la pregunta del usuario y decides qué componente mostrar y con qué parámetros.
-NO calculas cifras ni montos: de eso se encarga la app. Solo eliges componente e intención.
+Analizas la pregunta del usuario y decides qué componentes mostrar y con qué parámetros.
+NO calculas cifras ni montos: de eso se encarga la app. Solo eliges componentes e intención.
 
-Responde EXCLUSIVAMENTE con JSON válido (sin markdown ni texto extra) con esta forma:
-{ "componentToRender": <nombre>, "params": { ... } }
+Puedes COMPONER una interfaz con varias secciones. Responde EXCLUSIVAMENTE con JSON
+válido (sin markdown ni texto extra) con esta forma:
+{ "sections": [ { "componentToRender": <nombre>, "params": { ... } }, ... ] }
+
+REGLA CLAVE de cuántas secciones:
+- Una pregunta CONCRETA → UNA sola sección (p. ej. "solo mis Yape", "¿me conviene el crédito?").
+- Una pregunta de PANORAMA → VARIAS secciones (2 a 4) que se apilan en un panel completo.
+  Dispara panorama cuando el usuario pide un "resumen", "cómo voy este mes", "mi situación
+  financiera", "un panorama general", "el estado de mis finanzas" o similar.
 
 Componentes disponibles:
+- "AppQuickStats": tira compacta de KPIs (Disponible, Gasto del mes, Gastos hormiga, Ahorro potencial). Ideal como CABECERA de un panorama. params: {}
 - "AppSpendingReport": resumen/reporte de gastos, "¿en qué gasto más?", comparar con el mes pasado. params: {}
 - "AppAntExpense": gastos hormiga, consumos pequeños, "gastos innecesarios", "en qué se me va el dinero en pequeñas cosas". params: {}
 - "AppMovementsTable": listar/filtrar movimientos concretos. params: { "method"?, "category"?, "merchant"?, "largest"?, "antsOnly"?, "period"? }
@@ -67,25 +74,70 @@ Valores válidos:
 - category: "cafeteria" | "snacks" | "comida_rapida" | "conveniencia" | "transporte" | "suscripciones" | "restaurantes" | "supermercado" | "servicios" | "ocio" | "salud" | "compras"
 - largest/antsOnly: true ; period: "current" | "previous"
 
-Ejemplos:
+Ejemplos (consultas concretas → UNA sección):
 Usuario: "¿En qué estoy gastando más dinero?"
-{ "componentToRender": "AppSpendingReport", "params": {} }
+{ "sections": [ { "componentToRender": "AppSpendingReport", "params": {} } ] }
 Usuario: "Muéstrame únicamente los pagos realizados con Yape"
-{ "componentToRender": "AppMovementsTable", "params": { "method": "yape" } }
+{ "sections": [ { "componentToRender": "AppMovementsTable", "params": { "method": "yape" } } ] }
 Usuario: "¿Cuál fue mi compra más grande este mes?"
-{ "componentToRender": "AppMovementsTable", "params": { "largest": true } }
+{ "sections": [ { "componentToRender": "AppMovementsTable", "params": { "largest": true } } ] }
 Usuario: "¿Cuánto pagué en restaurantes?"
-{ "componentToRender": "AppMovementsTable", "params": { "category": "restaurantes" } }
+{ "sections": [ { "componentToRender": "AppMovementsTable", "params": { "category": "restaurantes" } } ] }
 Usuario: "Quiero sacar un celular a crédito, ¿me conviene?"
-{ "componentToRender": "AppCreditAdvisor", "params": { "product": "celular", "price": 1200, "months": 12 } }
+{ "sections": [ { "componentToRender": "AppCreditAdvisor", "params": { "product": "celular", "price": 1200, "months": 12 } } ] }
 Usuario: "¿Tengo capacidad para pedir un préstamo?"
-{ "componentToRender": "AppCreditAdvisor", "params": {} }
+{ "sections": [ { "componentToRender": "AppCreditAdvisor", "params": {} } ] }
 Usuario: "¿Qué gastos son innecesarios?"
-{ "componentToRender": "AppAntExpense", "params": {} }
+{ "sections": [ { "componentToRender": "AppAntExpense", "params": {} } ] }
 Usuario: "¿Cómo puedo ahorrar más?"
-{ "componentToRender": "AppSavingsPlan", "params": {} }
+{ "sections": [ { "componentToRender": "AppSavingsPlan", "params": {} } ] }
 Usuario: "¿Qué compras podría reducir?"
-{ "componentToRender": "AppRecommendations", "params": {} }`;
+{ "sections": [ { "componentToRender": "AppRecommendations", "params": {} } ] }
+
+Ejemplo (panorama → VARIAS secciones que forman un panel completo):
+Usuario: "Hazme un resumen completo de mis finanzas de este mes"
+{ "sections": [
+  { "componentToRender": "AppQuickStats", "params": {} },
+  { "componentToRender": "AppSpendingReport", "params": {} },
+  { "componentToRender": "AppAntExpense", "params": {} },
+  { "componentToRender": "AppRecommendations", "params": {} }
+] }`;
+
+/**
+ * ENRUTADOR BÁSICO (nivel didáctico 1): elige entre solo 3 componentes toy.
+ * Mismo principio que el enrutador completo, con un catálogo mínimo para
+ * explicar el concepto "el modelo elige la UI" sin ruido.
+ */
+const BASICO_ROUTER_SYSTEM_PROMPT = `Eres un MOTOR DE ENRUTAMIENTO DE INTERFAZ para una app financiera sencilla.
+Analizas la pregunta del usuario y eliges UNO de tres componentes para responder.
+NO calculas cifras ni montos: solo eliges el componente y la intención.
+
+Responde EXCLUSIVAMENTE con JSON válido (sin markdown ni texto extra) con esta forma:
+{ "componentToRender": <nombre>, "params": { ... } }
+
+Componentes disponibles:
+- "StatCard": muestra UN número clave destacado. params: { "metric": "balance" | "spent" | "income" | "largest" }
+- "SimpleList": muestra una lista de movimientos recientes. params: { "limit"?: <número> }
+- "PlainAnswer": una respuesta explicativa en texto (definiciones, consejos generales, preguntas conceptuales). params: {}
+
+Valores válidos para metric:
+- "balance": saldo disponible ; "spent": total gastado este mes ; "income": ingreso mensual ; "largest": el mayor gasto
+
+Ejemplos:
+Usuario: "¿Cuánto he gastado este mes?"
+{ "componentToRender": "StatCard", "params": { "metric": "spent" } }
+Usuario: "¿Cuál es mi saldo disponible?"
+{ "componentToRender": "StatCard", "params": { "metric": "balance" } }
+Usuario: "¿Cuál fue mi mayor gasto?"
+{ "componentToRender": "StatCard", "params": { "metric": "largest" } }
+Usuario: "Muéstrame mis últimos movimientos"
+{ "componentToRender": "SimpleList", "params": {} }
+Usuario: "Enséñame mis 3 últimos gastos"
+{ "componentToRender": "SimpleList", "params": { "limit": 3 } }
+Usuario: "¿Qué es un gasto hormiga?"
+{ "componentToRender": "PlainAnswer", "params": {} }
+Usuario: "Dame un consejo para ahorrar"
+{ "componentToRender": "PlainAnswer", "params": {} }`;
 
 /**
  * ASESOR: redacta el análisis en lenguaje natural (se muestra con streaming).
@@ -116,8 +168,8 @@ Escribe en español, cercano y claro. Responde SOLO el JSON, sin markdown ni tex
  */
 @Injectable({ providedIn: 'root' })
 export class GenUiService {
-  /** Qué API detectamos (o null si el navegador no la soporta). */
-  private readonly apiKind = signal<ApiKind | null>(this.detectApi());
+  /** ¿Existe la Prompt API (el global `LanguageModel`) en este navegador? */
+  private readonly supported = signal<boolean>(typeof LanguageModel !== 'undefined');
 
   /** Estado de disponibilidad del modelo, para mostrarlo en el dashboard. */
   readonly status = signal<ModelStatus>('unsupported');
@@ -134,8 +186,8 @@ export class GenUiService {
   /** Texto CRUDO devuelto por el modelo en la última inferencia (antes del parseo). */
   readonly lastRawOutput = signal<string | null>(null);
 
-  /** ¿Existe alguna forma de la API en este navegador? */
-  readonly isSupported = computed(() => this.apiKind() !== null);
+  /** ¿La Prompt API está disponible en este navegador? */
+  readonly isSupported = computed(() => this.supported());
 
   /** ¿El modelo requiere descarga antes de poder usarse? */
   readonly needsDownload = computed(
@@ -169,33 +221,13 @@ export class GenUiService {
   //  Detección y disponibilidad
   // ─────────────────────────────────────────────────────────────────────────
 
-  private detectApi(): ApiKind | null {
-    if (typeof LanguageModel !== 'undefined') return 'modern';
-    if (this.legacyFactory()) return 'legacy';
-    return null;
-  }
-
-  private legacyFactory(): LegacyFactory | null {
-    return (globalThis as any)?.ai?.languageModel ?? null;
-  }
-
   async refreshAvailability(): Promise<void> {
-    const kind = this.apiKind();
+    if (!this.supported()) {
+      this.status.set('unsupported');
+      return;
+    }
     try {
-      if (kind === 'modern') {
-        this.status.set(await LanguageModel.availability());
-      } else if (kind === 'legacy') {
-        const caps = await this.legacyFactory()!.capabilities();
-        this.status.set(
-          caps.available === 'readily'
-            ? 'available'
-            : caps.available === 'after-download'
-              ? 'downloadable'
-              : 'unavailable',
-        );
-      } else {
-        this.status.set('unsupported');
-      }
+      this.status.set(await LanguageModel.availability());
     } catch {
       this.status.set('unavailable');
     }
@@ -212,20 +244,14 @@ export class GenUiService {
    * desde un botón). El propio `create()` baja el modelo y deja una sesión lista.
    */
   async downloadModel(): Promise<void> {
-    const kind = this.apiKind();
-    if (!kind) return;
+    if (!this.supported()) return;
 
     this.isDownloading.set(true);
     this.status.set('downloading');
     this.downloadProgress.set(0);
     try {
-      if (kind === 'modern') {
-        const session = await LanguageModel.create({ monitor: this.monitor });
-        session.destroy();
-      } else {
-        const session = await this.legacyFactory()!.create({});
-        session.destroy?.();
-      }
+      const session = await LanguageModel.create({ monitor: this.monitor });
+      session.destroy();
     } finally {
       this.isDownloading.set(false);
       await this.refreshAvailability();
@@ -241,7 +267,7 @@ export class GenUiService {
    * Devuelve la decisión + telemetría (raw, ms) para probar que la IA es real.
    */
   async route(query: string, context: string): Promise<RouteResult> {
-    const kind = this.requireApi();
+    this.requireApi();
     const input = `${context}\n\nPregunta del usuario: "${query}"`;
 
     console.groupCollapsed(
@@ -252,26 +278,17 @@ export class GenUiService {
 
     const start = performance.now();
     try {
+      const session = await LanguageModel.create({
+        initialPrompts: [{ role: 'system', content: ROUTER_SYSTEM_PROMPT }],
+        monitor: this.monitor,
+      });
       let raw: string;
-      if (kind === 'modern') {
-        const session = await LanguageModel.create({
-          initialPrompts: [{ role: 'system', content: ROUTER_SYSTEM_PROMPT }],
-          monitor: this.monitor,
+      try {
+        raw = await session.prompt(input, {
+          responseConstraint: A2UI_ROUTER_SCHEMA as unknown as Record<string, unknown>,
         });
-        try {
-          raw = await session.prompt(input, {
-            responseConstraint: A2UI_ROUTER_SCHEMA as unknown as Record<string, unknown>,
-          });
-        } finally {
-          session.destroy();
-        }
-      } else {
-        const session = await this.legacyFactory()!.create({ systemPrompt: ROUTER_SYSTEM_PROMPT });
-        try {
-          raw = await session.prompt(input);
-        } finally {
-          session.destroy?.();
-        }
+      } finally {
+        session.destroy();
       }
 
       const durationMs = Math.round(performance.now() - start);
@@ -280,7 +297,10 @@ export class GenUiService {
       this.lastDurationMs.set(durationMs);
 
       console.log('%c📥 Salida CRUDA:', 'font-weight:bold', raw);
-      console.log(`%c⏱️ Inferencia local: ${durationMs} ms (sin red, on-device)`, 'color:#00897b;font-weight:bold');
+      console.log(
+        `%c⏱️ Inferencia local: ${durationMs} ms (sin red, on-device)`,
+        'color:#00897b;font-weight:bold',
+      );
       console.log('%c✅ Decisión A2UI:', 'font-weight:bold', decision);
       console.groupEnd();
 
@@ -293,55 +313,98 @@ export class GenUiService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  //  1️⃣·B  ENRUTADOR BÁSICO — versión mínima del enrutador (3 componentes toy)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Igual que `route()` pero para el nivel Básico: usa `BASICO_ROUTER_SCHEMA` y
+   * un system prompt reducido para elegir entre 3 componentes toy. Método
+   * aditivo — no toca el flujo de `route()` que usan Intermedio/Avanzado.
+   */
+  async routeBasic(query: string, context: string): Promise<BasicoRouteResult> {
+    this.requireApi();
+    const input = `${context}\n\nPregunta del usuario: "${query}"`;
+    console.groupCollapsed(
+      '%c🧭 Gemini Nano — Enrutado BÁSICO (Prompt API)',
+      'color:#7c4dff;font-weight:bold',
+    );
+    console.log('%c🔍 Contexto:', 'font-weight:bold', context);
+
+    console.log('%c📤 Consulta:', 'font-weight:bold', query);
+
+    const start = performance.now();
+    try {
+      const session = await LanguageModel.create({
+        initialPrompts: [{ role: 'system', content: BASICO_ROUTER_SYSTEM_PROMPT }],
+        monitor: this.monitor,
+      });
+      let raw: string;
+      try {
+        raw = await session.prompt(input, {
+          responseConstraint: BASICO_ROUTER_SCHEMA as unknown as Record<string, unknown>,
+        });
+      } finally {
+        session.destroy();
+      }
+
+      const durationMs = Math.round(performance.now() - start);
+      const decision = this.parseBasicDecision(raw);
+      this.lastRawOutput.set(raw);
+      this.lastDurationMs.set(durationMs);
+
+      console.log('%c📥 Salida CRUDA:', 'font-weight:bold', raw);
+      console.log(
+        `%c⏱️ Inferencia local: ${durationMs} ms (sin red, on-device)`,
+        'color:#00897b;font-weight:bold',
+      );
+      console.log('%c✅ Decisión básica:', 'font-weight:bold', decision);
+      console.groupEnd();
+
+      return { decision, raw, durationMs };
+    } catch (err) {
+      console.error('%c❌ Error en el enrutado básico:', 'color:#d32f2f', err);
+      console.groupEnd();
+      throw err;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   //  2️⃣ NARRATIVA — respuesta en lenguaje natural con STREAMING token a token
   // ─────────────────────────────────────────────────────────────────────────
 
   /**
    * Genera el análisis en lenguaje natural y lo entrega en streaming: `onChunk`
    * recibe el texto acumulado en cada token. Devuelve el texto final completo.
-   * (En la API clásica, sin streaming, entrega el texto de una sola vez.)
    */
   async answerStreaming(
     query: string,
     context: string,
     onChunk: (accumulated: string) => void,
   ): Promise<string> {
-    const kind = this.requireApi();
+    this.requireApi();
     const input = `Contexto de la cuenta:\n${context}\n\nPregunta del usuario: "${query}"\nResponde como su asesor financiero.`;
 
-    if (kind === 'modern') {
-      const session = await LanguageModel.create({
-        initialPrompts: [{ role: 'system', content: ADVISOR_SYSTEM_PROMPT }],
-        monitor: this.monitor,
-      });
-      try {
-        const stream = session.promptStreaming(input);
-        const reader = stream.getReader();
-        let acc = '';
-        try {
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            acc += value ?? ''; // los chunks son deltas → se concatenan
-            onChunk(acc);
-          }
-        } finally {
-          reader.releaseLock();
-        }
-        return acc;
-      } finally {
-        session.destroy();
-      }
-    }
-
-    // Camino clásico: sin streaming real → una sola entrega.
-    const session = await this.legacyFactory()!.create({ systemPrompt: ADVISOR_SYSTEM_PROMPT });
+    const session = await LanguageModel.create({
+      initialPrompts: [{ role: 'system', content: ADVISOR_SYSTEM_PROMPT }],
+      monitor: this.monitor,
+    });
     try {
-      const text = await session.prompt(input);
-      onChunk(text);
-      return text;
+      const stream = session.promptStreaming(input);
+      const reader = stream.getReader();
+      let acc = '';
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          acc += value ?? ''; // los chunks son deltas → se concatenan
+          onChunk(acc);
+        }
+      } finally {
+        reader.releaseLock();
+      }
+      return acc;
     } finally {
-      session.destroy?.();
+      session.destroy();
     }
   }
 
@@ -355,29 +418,20 @@ export class GenUiService {
    * su fallback determinista para que la tarjeta nunca quede vacía.
    */
   async analyzeAntExpenses(summary: string): Promise<AntVerdict> {
-    const kind = this.requireApi();
+    this.requireApi();
     const start = performance.now();
 
+    const session = await LanguageModel.create({
+      initialPrompts: [{ role: 'system', content: ANT_SYSTEM_PROMPT }],
+      monitor: this.monitor,
+    });
     let raw: string;
-    if (kind === 'modern') {
-      const session = await LanguageModel.create({
-        initialPrompts: [{ role: 'system', content: ANT_SYSTEM_PROMPT }],
-        monitor: this.monitor,
+    try {
+      raw = await session.prompt(summary, {
+        responseConstraint: ANT_VERDICT_SCHEMA as unknown as Record<string, unknown>,
       });
-      try {
-        raw = await session.prompt(summary, {
-          responseConstraint: ANT_VERDICT_SCHEMA as unknown as Record<string, unknown>,
-        });
-      } finally {
-        session.destroy();
-      }
-    } else {
-      const session = await this.legacyFactory()!.create({ systemPrompt: ANT_SYSTEM_PROMPT });
-      try {
-        raw = await session.prompt(summary);
-      } finally {
-        session.destroy?.();
-      }
+    } finally {
+      session.destroy();
     }
 
     this.lastRawOutput.set(raw);
@@ -389,26 +443,61 @@ export class GenUiService {
   //  🛡️ Utilidades de parseo defensivo
   // ─────────────────────────────────────────────────────────────────────────
 
-  private requireApi(): ApiKind {
-    const kind = this.apiKind();
-    if (!kind) {
+  private requireApi(): void {
+    if (!this.supported()) {
       throw new Error(
-        'La IA integrada de Chrome no está disponible. Activa los flags de Prompt API y usa Chrome 138+.',
+        'La IA integrada de Chrome no está disponible. Usa Chrome de escritorio 148+ (o 138+ con los flags de Prompt API activados).',
       );
     }
-    return kind;
   }
 
-  private parseDecision(raw: string): RouteDecision {
+  /**
+   * Parsea la salida del enrutador a una decisión compuesta (1..N secciones).
+   * Tolerante por seguridad: aunque `responseConstraint` fuerza el formato
+   * `{ sections: [...] }`, aceptamos también el viejo `{ componentToRender, params }`
+   * (lo envolvemos como una única sección) y descartamos secciones inválidas.
+   * Solo lanza si no queda ninguna reconocible.
+   */
+  private parseDecision(raw: string): CompositeDecision {
+    const obj = this.parseObject(raw);
+    const rawList = Array.isArray(obj['sections']) ? (obj['sections'] as unknown[]) : [obj];
+    const sections: RouteDecision[] = [];
+    for (const s of rawList) {
+      if (typeof s !== 'object' || s === null) continue;
+      const rec = s as Record<string, unknown>;
+      const component = rec['componentToRender'];
+      if (
+        typeof component !== 'string' ||
+        !(A2UI_COMPONENTS as readonly string[]).includes(component)
+      )
+        continue;
+      const params = rec['params'];
+      sections.push({
+        componentToRender: component as A2uiComponent,
+        params:
+          typeof params === 'object' && params !== null ? (params as Record<string, unknown>) : {},
+      });
+    }
+    if (!sections.length) {
+      throw new Error(`Ninguna sección válida en la respuesta del modelo:\n${raw}`);
+    }
+    return { sections };
+  }
+
+  private parseBasicDecision(raw: string): BasicoDecision {
     const obj = this.parseObject(raw);
     const component = obj['componentToRender'];
-    if (typeof component !== 'string' || !(A2UI_COMPONENTS as readonly string[]).includes(component)) {
-      throw new Error(`Componente no reconocido en la respuesta del modelo:\n${raw}`);
+    if (
+      typeof component !== 'string' ||
+      !(BASICO_COMPONENTS as readonly string[]).includes(component)
+    ) {
+      throw new Error(`Componente básico no reconocido en la respuesta del modelo:\n${raw}`);
     }
     const params = obj['params'];
     return {
-      componentToRender: component as A2uiComponent,
-      params: typeof params === 'object' && params !== null ? (params as Record<string, unknown>) : {},
+      componentToRender: component as BasicoComponent,
+      params:
+        typeof params === 'object' && params !== null ? (params as Record<string, unknown>) : {},
     };
   }
 
@@ -419,7 +508,10 @@ export class GenUiService {
     if (!valid) throw new Error(`Veredicto inválido del modelo:\n${raw}`);
     return {
       status,
-      headline: typeof obj['headline'] === 'string' ? (obj['headline'] as string) : 'Análisis de gastos hormiga',
+      headline:
+        typeof obj['headline'] === 'string'
+          ? (obj['headline'] as string)
+          : 'Análisis de gastos hormiga',
       message: typeof obj['message'] === 'string' ? (obj['message'] as string) : '',
     };
   }

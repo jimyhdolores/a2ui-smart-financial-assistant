@@ -1,0 +1,13 @@
+<mat-card class="quick" appearance="outlined">
+  <div class="stats">
+    @for (it of items(); track it.label) {
+      <div class="stat tone-{{ it.tone }}">
+        <mat-icon>{{ it.icon }}</mat-icon>
+        <div class="stat-info">
+          <span class="stat-label">{{ it.label }}</span>
+          <span class="stat-value">{{ currency() }}{{ it.value | number: '1.2-2' }}</span>
+        </div>
+      </div>
+    }
+  </div>
+</mat-card>

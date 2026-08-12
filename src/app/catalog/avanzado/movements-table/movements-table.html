@@ -1,0 +1,87 @@
+<mat-card class="movements" appearance="outlined">
+  <div class="mov-head">
+    <div class="head-left">
+      <mat-icon class="head-icon">receipt_long</mat-icon>
+      <h3>{{ title() }}</h3>
+    </div>
+    @if (filterLabel()) {
+      <mat-chip-set>
+        <mat-chip highlighted>
+          <mat-icon matChipAvatar>filter_alt</mat-icon>
+          {{ filterLabel() }}
+        </mat-chip>
+      </mat-chip-set>
+    }
+  </div>
+
+  <!-- Filtros rápidos interactivos → disparan action.event (filterMovements). -->
+  <mat-chip-set class="quick-filters" aria-label="Filtros rápidos">
+    @for (f of quickFilters; track f.id) {
+      <mat-chip
+        [highlighted]="active() === f.id"
+        class="quick-chip"
+        (click)="onFilter(f)"
+      >
+        <mat-icon matChipAvatar>{{ f.icon }}</mat-icon>
+        {{ f.label }}
+      </mat-chip>
+    }
+  </mat-chip-set>
+
+  <div class="mov-summary">
+    <span>{{ count() }} {{ count() === 1 ? 'movimiento' : 'movimientos' }}</span>
+    <strong>{{ currency() }}{{ total() | number: '1.2-2' }}</strong>
+  </div>
+
+  @if (rows().length) {
+    <div class="table-wrap">
+      <table mat-table [dataSource]="rows()">
+        <!-- Fecha -->
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+          <td mat-cell *matCellDef="let r" class="c-date">{{ r.date }}</td>
+        </ng-container>
+
+        <!-- Comercio + categoría -->
+        <ng-container matColumnDef="merchant">
+          <th mat-header-cell *matHeaderCellDef>Comercio</th>
+          <td mat-cell *matCellDef="let r">
+            <div class="merchant-cell">
+              <span class="cat-icon"><mat-icon>{{ r.icon }}</mat-icon></span>
+              <div class="merchant-info">
+                <span class="merchant-name">{{ r.merchant }}</span>
+                <span class="merchant-cat">{{ r.category }}</span>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Monto -->
+        <ng-container matColumnDef="amount">
+          <th mat-header-cell *matHeaderCellDef class="right">Monto</th>
+          <td mat-cell *matCellDef="let r" class="right c-amount">
+            {{ currency() }}{{ r.amount | number: '1.2-2' }}
+          </td>
+        </ng-container>
+
+        <!-- Método -->
+        <ng-container matColumnDef="method">
+          <th mat-header-cell *matHeaderCellDef>Método</th>
+          <td mat-cell *matCellDef="let r">
+            <span class="method-chip">
+              <mat-icon>{{ r.methodIcon }}</mat-icon>{{ r.methodLabel }}
+            </span>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
+    </div>
+  } @else {
+    <p class="empty">
+      <mat-icon>search_off</mat-icon>
+      No encontré movimientos con ese filtro.
+    </p>
+  }
+</mat-card>

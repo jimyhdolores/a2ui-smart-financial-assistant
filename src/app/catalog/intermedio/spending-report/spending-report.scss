@@ -1,0 +1,133 @@
+:host {
+  display: block;
+}
+
+.report {
+  padding: 1.25rem;
+  border-left: 5px solid var(--mat-sys-primary);
+}
+
+.report-head {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+
+  .head-icon {
+    color: var(--mat-sys-primary);
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.125rem;
+  }
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container-high);
+
+  .kpi-label {
+    font-size: 0.75rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .kpi-value {
+    font-size: 1.375rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+
+    &.small {
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+  }
+
+  .kpi-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.75rem;
+
+    mat-icon {
+      font-size: 0.95rem;
+      width: 0.95rem;
+      height: 0.95rem;
+    }
+
+    &.up { color: #d32f2f; }
+    &.down { color: #2e7d32; }
+    &.flat,
+    &.neutral { color: var(--mat-sys-on-surface-variant); }
+  }
+}
+
+.block {
+  margin-top: 1rem;
+
+  h4 {
+    margin: 0 0 0.25rem;
+    font-size: 0.9375rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.mov-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    mat-icon {
+      color: var(--mat-sys-primary);
+      flex-shrink: 0;
+    }
+  }
+
+  .mov-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .mov-merchant {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mov-meta {
+    font-size: 0.75rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .mov-amount {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
