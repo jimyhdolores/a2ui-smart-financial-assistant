@@ -10,7 +10,6 @@ import { Account, CATEGORY_META, CURRENCY, PAYMENT_METHOD_META } from '../../../
 import { A2uiMessageBuilder } from '../../../services/a2ui-message-builder';
 import { FinanceAnalyticsService } from '../../../services/finance-analytics';
 import { FinanceDataService } from '../../../services/finance-data';
-import { GenUiService } from '../../../services/gen-ui';
 import { ChartConfig, donutChart } from '../../../catalog/shared/chart-theme';
 
 /** Superficie A2UI dedicada del hero de gastos hormiga del dashboard. */
@@ -48,7 +47,6 @@ interface RecentRow {
 export class AccountSummary {
   private readonly finance = inject(FinanceDataService);
   private readonly analytics = inject(FinanceAnalyticsService);
-  private readonly ai = inject(GenUiService);
   private readonly renderer = inject(A2uiRendererService);
   private readonly builder = inject(A2uiMessageBuilder);
 
@@ -69,19 +67,12 @@ export class AccountSummary {
   /** Página actual dentro del mes visible. */
   protected readonly pageIndex = signal(0);
 
-  /** Token para descartar respuestas del LLM que llegan tarde (cambio de cuenta). */
-  private requestToken = 0;
-
   constructor() {
-    // Al cambiar de cuenta (o quedar el modelo listo): render inmediato del hero
-    // por A2UI (veredicto fallback, recorte 0%) + intento de veredicto LLM.
     effect(() => {
       const acc = this.finance.selectedAccount();
-      const ready = this.ai.isReady();
-      this.monthOffset.set(0); // volver al mes actual al cambiar de cuenta
+      this.monthOffset.set(0);
       this.pageIndex.set(0);
       this.renderAntHero(acc);
-      if (ready) void this.enrichVerdict(acc);
     });
   }
 
@@ -94,28 +85,6 @@ export class AccountSummary {
     const fallback = this.analytics.antVerdictFallback(acc);
     const data = this.analytics.antData(acc, fallback, 0, true);
     this.renderer.processMessages(this.builder.build('AppAntExpense', data, ANT_SURFACE));
-  }
-
-  /**
-   * Pide al LLM un veredicto más humano; si llega, actualiza SOLO las hojas del
-   * veredicto (status/headline/message) por `updateDataModel`, sin pisar la
-   * proyección que el usuario pudiera haber simulado con el slider. Si falla,
-   * se queda el fallback determinista.
-   */
-  private async enrichVerdict(acc: Account): Promise<void> {
-    const token = ++this.requestToken;
-    try {
-      const summary = this.analytics.buildContext(acc);
-      const v = await this.ai.analyzeAntExpenses(summary);
-      if (token !== this.requestToken) return;
-      this.renderer.processMessages([
-        this.builder.patch(ANT_SURFACE, 'status', v.status),
-        this.builder.patch(ANT_SURFACE, 'headline', v.headline),
-        this.builder.patch(ANT_SURFACE, 'message', v.message),
-      ]);
-    } catch {
-      /* nos quedamos con el fallback determinista */
-    }
   }
 
   // ─── Datos derivados (deterministas) ───────────────────────────────────────

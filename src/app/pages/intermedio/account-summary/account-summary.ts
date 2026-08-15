@@ -6,10 +6,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { NgApexchartsModule } from 'ng-apexcharts';
 
 import { AntVerdict } from '../../../models/a2ui.model';
-import { Account, CATEGORY_META, CURRENCY, PAYMENT_METHOD_META } from '../../../models/finance.model';
+import { CATEGORY_META, CURRENCY, PAYMENT_METHOD_META } from '../../../models/finance.model';
 import { FinanceAnalyticsService } from '../../../services/finance-analytics';
 import { FinanceDataService } from '../../../services/finance-data';
-import { GenUiService } from '../../../services/gen-ui';
 import { AntExpense } from '../../../catalog/intermedio/ant-expense/ant-expense';
 import { ChartConfig, donutChart } from '../../../catalog/shared/chart-theme';
 
@@ -45,7 +44,6 @@ interface RecentRow {
 export class AccountSummary {
   private readonly finance = inject(FinanceDataService);
   private readonly analytics = inject(FinanceAnalyticsService);
-  private readonly ai = inject(GenUiService);
 
   /** "Hoy" para calcular el offset de mes de cada movimiento. */
   private readonly today = new Date();
@@ -71,32 +69,14 @@ export class AccountSummary {
   /** % de recorte del simulador "¿y si…?". */
   protected readonly reductionPct = signal(0);
 
-  /** Token para descartar respuestas del LLM que llegan tarde (cambio de cuenta). */
-  private requestToken = 0;
-
   constructor() {
-    // Al cambiar de cuenta (o quedar el modelo listo): fallback inmediato + intento LLM.
     effect(() => {
       const acc = this.finance.selectedAccount();
-      const ready = this.ai.isReady();
       this.reductionPct.set(0);
-      this.monthOffset.set(0); // volver al mes actual al cambiar de cuenta
+      this.monthOffset.set(0);
       this.pageIndex.set(0);
       this.verdict.set(this.analytics.antVerdictFallback(acc));
-      if (ready) void this.enrichVerdict(acc);
     });
-  }
-
-  /** Pide al LLM un veredicto más humano; si falla, se queda el fallback. */
-  private async enrichVerdict(acc: Account): Promise<void> {
-    const token = ++this.requestToken;
-    try {
-      const summary = this.analytics.buildContext(acc);
-      const v = await this.ai.analyzeAntExpenses(summary);
-      if (token === this.requestToken) this.verdict.set(v);
-    } catch {
-      /* nos quedamos con el fallback determinista */
-    }
   }
 
   protected onReduction(pct: number): void {

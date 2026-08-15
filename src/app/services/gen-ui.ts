@@ -3,8 +3,6 @@ import {
   A2UI_COMPONENTS,
   A2UI_ROUTER_SCHEMA,
   A2uiComponent,
-  ANT_VERDICT_SCHEMA,
-  AntVerdict,
 } from '../models/a2ui.model';
 import {
   BASICO_COMPONENTS,
@@ -50,58 +48,53 @@ const ROUTER_SYSTEM_PROMPT = `Eres un MOTOR DE ENRUTAMIENTO DE INTERFAZ para una
 Analizas la pregunta del usuario y decides qué componentes mostrar y con qué parámetros.
 NO calculas cifras ni montos: de eso se encarga la app. Solo eliges componentes e intención.
 
-Puedes COMPONER una interfaz con varias secciones. Responde EXCLUSIVAMENTE con JSON
-válido (sin markdown ni texto extra) con esta forma:
+Responde EXCLUSIVAMENTE con JSON válido (sin markdown ni texto extra) con esta forma:
 { "sections": [ { "componentToRender": <nombre>, "params": { ... } }, ... ] }
 
-REGLA CLAVE de cuántas secciones:
-- Una pregunta CONCRETA → UNA sola sección (p. ej. "solo mis Yape", "¿me conviene el crédito?").
-- Una pregunta de PANORAMA → VARIAS secciones (2 a 4) que se apilan en un panel completo.
-  Dispara panorama cuando el usuario pide un "resumen", "cómo voy este mes", "mi situación
-  financiera", "un panorama general", "el estado de mis finanzas" o similar.
-
 Componentes disponibles:
-- "AppQuickStats": tira compacta de KPIs (Disponible, Gasto del mes, Gastos hormiga, Ahorro potencial). Ideal como CABECERA de un panorama. params: {}
-- "AppSpendingReport": resumen/reporte de gastos, "¿en qué gasto más?", comparar con el mes pasado. params: {}
-- "AppAntExpense": gastos hormiga, consumos pequeños, "gastos innecesarios", "en qué se me va el dinero en pequeñas cosas". params: {}
-- "AppMovementsTable": listar/filtrar movimientos concretos. params: { "method"?, "category"?, "merchant"?, "largest"?, "antsOnly"?, "period"? }
-- "AppRecommendations": consejos para gastar mejor, "qué compras reducir", "qué gastos quitar". params: {}
-- "AppSavingsPlan": ahorrar, metas de ahorro, "cómo ahorro más". params: { "goalName"?, "goalTarget"? }
-- "AppCreditAdvisor": tarjeta de crédito, endeudamiento, préstamos, comprar algo a crédito. params: { "product"?, "price"?, "months"? }
+- "AppQuickStats": tira compacta de KPIs. Ideal como CABECERA de un panorama. params: {}
+- "AppSpendingReport": reporte de gastos, "¿en qué gasto más?". params: {}
+- "AppAntExpense": gastos hormiga, consumos pequeños. params: {}
+- "AppMovementsTable": listar/filtrar movimientos. params: { "method"?, "category"?, "merchant"?, "largest"?, "antsOnly"?, "period"? }
+- "AppRecommendations": consejos para gastar mejor. params: {}
+- "AppSavingsPlan": metas de ahorro. params: { "goalName"?, "goalTarget"? }
+- "AppCreditAdvisor": crédito, endeudamiento, compras a crédito. params: { "product"?, "price"?, "months"? }
 
 Valores válidos:
 - method: "yape" | "plin" | "debito" | "credito" | "efectivo" | "transferencia"
 - category: "cafeteria" | "snacks" | "comida_rapida" | "conveniencia" | "transporte" | "suscripciones" | "restaurantes" | "supermercado" | "servicios" | "ocio" | "salud" | "compras"
 - largest/antsOnly: true ; period: "current" | "previous"
 
-Ejemplos (consultas concretas → UNA sección):
-Usuario: "¿En qué estoy gastando más dinero?"
-{ "sections": [ { "componentToRender": "AppSpendingReport", "params": {} } ] }
-Usuario: "Muéstrame únicamente los pagos realizados con Yape"
+REGLA IMPORTANTE — cuántas secciones devolver:
+- Pregunta CONCRETA (un solo tema) → 1 sección.
+- Pregunta AMPLIA o PANORÁMICA → VARIAS secciones (2 a 4) apiladas.
+  Palabras clave de panorama: "resumen", "cómo voy", "mi situación", "panorama", "estado de mis finanzas", "mi mes", "todo junto", "análisis completo", "cómo estoy".
+
+Ejemplos de 1 sección (preguntas concretas):
+Usuario: "Muéstrame solo mis Yape"
 { "sections": [ { "componentToRender": "AppMovementsTable", "params": { "method": "yape" } } ] }
-Usuario: "¿Cuál fue mi compra más grande este mes?"
-{ "sections": [ { "componentToRender": "AppMovementsTable", "params": { "largest": true } } ] }
-Usuario: "¿Cuánto pagué en restaurantes?"
-{ "sections": [ { "componentToRender": "AppMovementsTable", "params": { "category": "restaurantes" } } ] }
-Usuario: "Quiero sacar un celular a crédito, ¿me conviene?"
+Usuario: "Quiero sacar un celular a crédito"
 { "sections": [ { "componentToRender": "AppCreditAdvisor", "params": { "product": "celular", "price": 1200, "months": 12 } } ] }
-Usuario: "¿Tengo capacidad para pedir un préstamo?"
-{ "sections": [ { "componentToRender": "AppCreditAdvisor", "params": {} } ] }
 Usuario: "¿Qué gastos son innecesarios?"
 { "sections": [ { "componentToRender": "AppAntExpense", "params": {} } ] }
 Usuario: "¿Cómo puedo ahorrar más?"
 { "sections": [ { "componentToRender": "AppSavingsPlan", "params": {} } ] }
-Usuario: "¿Qué compras podría reducir?"
-{ "sections": [ { "componentToRender": "AppRecommendations", "params": {} } ] }
+Usuario: "¿Cuál fue mi compra más grande?"
+{ "sections": [ { "componentToRender": "AppMovementsTable", "params": { "largest": true } } ] }
 
-Ejemplo (panorama → VARIAS secciones que forman un panel completo):
-Usuario: "Hazme un resumen completo de mis finanzas de este mes"
-{ "sections": [
-  { "componentToRender": "AppQuickStats", "params": {} },
-  { "componentToRender": "AppSpendingReport", "params": {} },
-  { "componentToRender": "AppAntExpense", "params": {} },
-  { "componentToRender": "AppRecommendations", "params": {} }
-] }`;
+Ejemplos de VARIAS secciones (preguntas amplias / panorama):
+Usuario: "Hazme un resumen de mis finanzas de este mes"
+{ "sections": [ { "componentToRender": "AppQuickStats", "params": {} }, { "componentToRender": "AppSpendingReport", "params": {} }, { "componentToRender": "AppAntExpense", "params": {} }, { "componentToRender": "AppRecommendations", "params": {} } ] }
+Usuario: "¿Cómo voy este mes? Quiero ver todo"
+{ "sections": [ { "componentToRender": "AppQuickStats", "params": {} }, { "componentToRender": "AppSpendingReport", "params": {} }, { "componentToRender": "AppRecommendations", "params": {} } ] }
+Usuario: "¿Cómo estoy financieramente?"
+{ "sections": [ { "componentToRender": "AppQuickStats", "params": {} }, { "componentToRender": "AppSpendingReport", "params": {} }, { "componentToRender": "AppAntExpense", "params": {} } ] }
+Usuario: "Dame mi situación financiera y consejos"
+{ "sections": [ { "componentToRender": "AppQuickStats", "params": {} }, { "componentToRender": "AppRecommendations", "params": {} } ] }
+Usuario: "¿En qué gasto más y qué puedo recortar?"
+{ "sections": [ { "componentToRender": "AppSpendingReport", "params": {} }, { "componentToRender": "AppRecommendations", "params": {} } ] }
+
+RECUERDA: si la pregunta es amplia, panorámica o pide "resumen" / "cómo voy", DEBES devolver VARIAS secciones (2 a 4), NO una sola.`;
 
 /**
  * ENRUTADOR BÁSICO (nivel didáctico 1): elige entre solo 3 componentes toy.
@@ -148,14 +141,6 @@ Respondes en español en 2 a 4 frases, con tono humano. Usas ÚNICAMENTE las cif
 contexto que se te da; NO inventes montos ni datos que no estén ahí. No uses markdown ni
 listas ni viñetas: solo texto corrido y natural, como un buen asesor que explica en confianza.`;
 
-/** VEREDICTO de gastos hormiga: estado + titular + mensaje. */
-const ANT_SYSTEM_PROMPT = `Eres un asesor financiero que evalúa los "gastos hormiga" (consumos pequeños y frecuentes).
-A partir del resumen que se te da, emites un veredicto en JSON válido con esta forma exacta:
-{ "status": "good" | "warning" | "risk", "headline": <titular corto>, "message": <1-2 frases> }
-- "good": los gastos hormiga están bajo control o bajando. headline tipo "Vas administrando bien tus gastos".
-- "warning": están subiendo o pesan bastante. headline tipo "Estás aumentando tus gastos pequeños".
-- "risk": suben mucho y ponen en peligro el saldo. headline tipo "Podrías quedarte sin dinero antes de fin de mes".
-Escribe en español, cercano y claro. Responde SOLO el JSON, sin markdown ni texto extra.`;
 
 /**
  * ╔═══════════════════════════════════════════════════════════════════════╗
@@ -409,37 +394,6 @@ export class GenUiService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  //  3️⃣ VEREDICTO de gastos hormiga (estructurado, con fallback en el llamador)
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /**
-   * Pide al modelo un veredicto sobre los gastos hormiga a partir del resumen ya
-   * calculado. Lanza si el modelo no está disponible/falla → el llamador aplica
-   * su fallback determinista para que la tarjeta nunca quede vacía.
-   */
-  async analyzeAntExpenses(summary: string): Promise<AntVerdict> {
-    this.requireApi();
-    const start = performance.now();
-
-    const session = await LanguageModel.create({
-      initialPrompts: [{ role: 'system', content: ANT_SYSTEM_PROMPT }],
-      monitor: this.monitor,
-    });
-    let raw: string;
-    try {
-      raw = await session.prompt(summary, {
-        responseConstraint: ANT_VERDICT_SCHEMA as unknown as Record<string, unknown>,
-      });
-    } finally {
-      session.destroy();
-    }
-
-    this.lastRawOutput.set(raw);
-    this.lastDurationMs.set(Math.round(performance.now() - start));
-    return this.parseVerdict(raw);
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
   //  🛡️ Utilidades de parseo defensivo
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -498,21 +452,6 @@ export class GenUiService {
       componentToRender: component as BasicoComponent,
       params:
         typeof params === 'object' && params !== null ? (params as Record<string, unknown>) : {},
-    };
-  }
-
-  private parseVerdict(raw: string): AntVerdict {
-    const obj = this.parseObject(raw);
-    const status = obj['status'];
-    const valid = status === 'good' || status === 'warning' || status === 'risk';
-    if (!valid) throw new Error(`Veredicto inválido del modelo:\n${raw}`);
-    return {
-      status,
-      headline:
-        typeof obj['headline'] === 'string'
-          ? (obj['headline'] as string)
-          : 'Análisis de gastos hormiga',
-      message: typeof obj['message'] === 'string' ? (obj['message'] as string) : '',
     };
   }
 

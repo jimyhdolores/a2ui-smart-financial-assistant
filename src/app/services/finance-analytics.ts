@@ -198,8 +198,11 @@ export class FinanceAnalyticsService {
     const monthly = round2((price * 1.15) / months); // +15% aprox. por intereses/CTC
     const totalObligations = p.minPayment + monthly;
     const dti = p.income > 0 ? Math.round((totalObligations / p.income) * 100) : 100;
-    const verdict: RiskLevel = dti >= 40 ? 'high' : dti >= 25 ? 'medium' : 'low';
-    return { monthly, months, price: round2(price), dti, verdict, capacity: p.capacity };
+    const exceedsLimit = price > p.limit;
+    const exceedsAvailable = price > p.available;
+    const verdict: RiskLevel =
+      exceedsLimit || exceedsAvailable || dti >= 40 ? 'high' : dti >= 25 ? 'medium' : 'low';
+    return { monthly, months, price: round2(price), dti, verdict, capacity: p.capacity, exceedsLimit, exceedsAvailable };
   }
 
   /** Filtra movimientos según los parámetros que decidió el LLM. */
@@ -249,8 +252,14 @@ export class FinanceAnalyticsService {
     const mom = this.monthOverMonth(account);
     const proj = this.projectDepletion(account);
 
+    const funds = this.availableFunds(account);
+    const accountLine =
+      account.kind === 'credito'
+        ? `Cuenta: ${account.name} (${account.kind}). Crédito disponible: ${CURRENCY}${funds}. Deuda actual: ${CURRENCY}${account.balance}.`
+        : `Cuenta: ${account.name} (${account.kind}). Saldo disponible: ${CURRENCY}${account.balance}.`;
+
     const lines = [
-      `Cuenta: ${account.name} (${account.kind}). Saldo: ${CURRENCY}${account.balance}.`,
+      accountLine,
       `Gasto del mes: ${CURRENCY}${gasto} en ${this.gastos(account, 'current').length} movimientos.`,
       `Top categorías: ${cats.map((c) => `${c.label} ${CURRENCY}${c.total}`).join(', ')}.`,
       `Gastos hormiga: ${CURRENCY}${ant.total} (${ant.count} compras pequeñas), mes anterior ${CURRENCY}${mom.previous} (tendencia ${mom.direction === 'up' ? 'al alza' : mom.direction === 'down' ? 'a la baja' : 'estable'}).`,
@@ -258,7 +267,7 @@ export class FinanceAnalyticsService {
     ];
     if (account.kind === 'credito') {
       const p = this.creditProfile(account);
-      lines.push(`Crédito: deuda ${CURRENCY}${p.debt} de ${CURRENCY}${p.limit} (${p.usagePct}% usado).`);
+      lines.push(`Límite de crédito: ${CURRENCY}${p.limit} (${p.usagePct}% usado). Pago mínimo: ${CURRENCY}${p.minPayment}.`);
     }
     return lines.join('\n');
   }
@@ -275,11 +284,16 @@ export class FinanceAnalyticsService {
     const share = ant.total / total;
     const mom = this.monthOverMonth(account);
     const proj = this.projectDepletion(account);
+    const isCredit = account.kind === 'credito';
+    const creditStressed = isCredit && (this.creditProfile(account).usagePct >= 50);
 
-    if ((mom.direction === 'up' && mom.deltaPct > 15 && share > 0.3) || proj.depletesBeforeMonthEnd) {
+    if (
+      (mom.direction === 'up' && mom.deltaPct > 15 && (share > 0.3 || creditStressed)) ||
+      proj.depletesBeforeMonthEnd
+    ) {
       return {
         status: 'risk',
-        headline: 'Riesgo: tus gastos pequeños se están saliendo de control',
+        headline: 'Podrías quedarte sin dinero antes de fin de mes',
         message:
           'Si continúas así podrías quedarte sin dinero antes de finalizar el mes. Conviene frenar los consumos hormiga cuanto antes.',
       };
@@ -530,12 +544,22 @@ export class FinanceAnalyticsService {
       base['monthlyPayment'] = sim.monthly;
       base['dti'] = sim.dti;
       base['verdict'] = sim.verdict;
-      base['recommendation'] =
-        sim.verdict === 'high'
-          ? `Comprometería el ${sim.dti}% de tu ingreso mensual. No es un buen momento; mejor espera o busca un plazo más largo.`
-          : sim.verdict === 'medium'
-            ? `Es asumible (${sim.dti}% de tu ingreso), pero ajustado. Hazlo solo si recortas otros gastos.`
-            : `Tienes holgura: la cuota sería el ${sim.dti}% de tu ingreso. Puedes asumirlo con comodidad.`;
+      base['exceedsLimit'] = sim.exceedsLimit;
+      base['exceedsAvailable'] = sim.exceedsAvailable;
+
+      let recommendation: string;
+      if (sim.exceedsLimit) {
+        recommendation = `El precio (${CURRENCY}${sim.price}) supera tu límite de crédito (${CURRENCY}${p.limit}). No es posible financiarlo con esta tarjeta.`;
+      } else if (sim.exceedsAvailable) {
+        recommendation = `El precio (${CURRENCY}${sim.price}) supera tu crédito disponible (${CURRENCY}${p.available}). Necesitarías reducir la deuda actual antes de poder financiarlo.`;
+      } else if (sim.verdict === 'high') {
+        recommendation = `Comprometería el ${sim.dti}% de tu ingreso mensual. No es un buen momento; mejor espera o busca un plazo más largo.`;
+      } else if (sim.verdict === 'medium') {
+        recommendation = `Es asumible (${sim.dti}% de tu ingreso), pero ajustado. Hazlo solo si recortas otros gastos.`;
+      } else {
+        recommendation = `Tienes holgura: la cuota sería el ${sim.dti}% de tu ingreso. Puedes asumirlo con comodidad.`;
+      }
+      base['recommendation'] = recommendation;
     } else {
       base['recommendation'] =
         p.riskLevel === 'high'

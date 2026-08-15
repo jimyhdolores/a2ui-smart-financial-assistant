@@ -56,14 +56,14 @@ export class CreditAdvisor extends FinanceComponent {
   readonly verdictLabel = computed(
     () =>
       ({
-        good: 'Te lo puedes permitir',
-        tight: 'Ajustado — piénsalo bien',
-        risky: 'No es recomendable ahora',
+        low: 'Te lo puedes permitir',
+        medium: 'Ajustado — piénsalo bien',
+        high: 'No es recomendable ahora',
       })[this.verdict()] ?? '',
   );
   readonly verdictIcon = computed(
     () =>
-      ({ good: 'check_circle', tight: 'warning', risky: 'dangerous' })[this.verdict()] ??
+      ({ low: 'check_circle', medium: 'warning', high: 'dangerous' })[this.verdict()] ??
       'info',
   );
 }

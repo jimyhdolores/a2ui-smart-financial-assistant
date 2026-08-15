@@ -95,7 +95,7 @@ El nivel **Básico** existe para explicar el concepto sin ruido: tres componente
 | **🔁 Round-trip agéntico** — el componente emite un `action.event` y TypeScript devuelve un `updateDataModel`  | [`FinanceComponent.dispatch()`](src/app/catalog/avanzado/finance-component.base.ts) + [`A2uiActionService`](src/app/services/a2ui-action.service.ts)                                        |
 | **🎯 Catálogos de componentes ("bloques de Lego"), uno por nivel**                                             | [`src/app/catalog/`](src/app/catalog/) — `BASICO_REGISTRY` · `INTERMEDIO_REGISTRY` · `buildFinanceCatalog()`                                                                                |
 | **📜 Contrato tipado + salida estructurada**                                                                   | [`a2ui.model.ts`](src/app/models/a2ui.model.ts) + [`basico.model.ts`](src/app/models/basico.model.ts) (`responseConstraint` / JSON Schema)                                                  |
-| **🐜 Veredicto estructurado con fallback determinista**                                                        | [`GenUiService.analyzeAntExpenses()`](src/app/services/gen-ui.ts) + [`antVerdictFallback()`](src/app/services/finance-analytics.ts)                                                         |
+| **🐜 Veredicto determinista de gastos hormiga** (sin depender del LLM)                                         | [`antVerdictFallback()`](src/app/services/finance-analytics.ts) — umbrales por tipo de cuenta, tendencia mes-a-mes y proyección                                                            |
 | **⬇️ Descarga del modelo bajo gesto del usuario** (en el header único)                                         | [`GenUiService.downloadModel()`](src/app/services/gen-ui.ts) + [`app.html`](src/app/app.html)                                                                                               |
 
 ---
@@ -140,7 +140,7 @@ Un vocabulario mínimo para explicar el concepto sin gráficos ni protocolo:
 - 🟡 **`warning`** — _"Estás aumentando tus gastos pequeños"_ (ámbar).
 - 🔴 **`risk`** — _"Si continúas así podrías quedarte sin dinero antes de finalizar el mes"_ (rojo).
 
-El **texto** del veredicto lo redacta Gemini Nano (`analyzeAntExpenses`), pero si el modelo falla o no está disponible hay un **fallback determinista por umbrales** ([`antVerdictFallback`](src/app/services/finance-analytics.ts)): la tarjeta **nunca queda vacía ni rota**.
+El veredicto lo calcula TypeScript de forma **determinista por umbrales** ([`antVerdictFallback`](src/app/services/finance-analytics.ts)): tendencia mes-a-mes, peso relativo del gasto hormiga, proyección de agotamiento y, para tarjetas de crédito, nivel de uso de la línea. La tarjeta se renderiza instantáneamente con el estado correcto, sin depender de la disponibilidad del modelo.
 
 Además incluye el **simulador "¿y si...?"**: un slider que recorta un % de los gastos hormiga y **recalcula en vivo** (TypeScript puro, instantáneo, sin IA) la fecha estimada de agotamiento del saldo. En el nivel Avanzado ese slider viaja como un `action.event` de A2UI y el recálculo vuelve como `updateDataModel` sobre la misma superficie.
 
@@ -164,7 +164,7 @@ src/app/
 │   └── a2ui-protocol.ts            # 📡 Protocolo A2UI v0.9: catalog id, campos por componente, actions, surface ids
 │
 ├── services/
-│   ├── gen-ui.ts                   # 🧠 GenUiService: detección/descarga + route() + routeBasic() + answerStreaming() + analyzeAntExpenses()
+│   ├── gen-ui.ts                   # 🧠 GenUiService: detección/descarga + route() + routeBasic() + answerStreaming()
 │   ├── finance-data.ts             # 🗃️  Dataset ficticio (3 cuentas, 6 meses de historial determinista) + signals
 │   ├── finance-analytics.ts        # 🧮 Matemática DETERMINISTA: categorías, hormiga, mes-a-mes, proyección, crédito, filtros
 │   ├── a2ui-message-builder.ts     # 📡 Arma el documento/mensaje A2UI que consume la surface (Avanzado)
@@ -272,7 +272,7 @@ Abre `http://localhost:4200/` en tu Chrome ya configurado (pasos anteriores). La
 2. Usa el **selector de nivel** del header para moverte entre **Básico**, **Intermedio** y **Avanzado**. El sidebar de cuentas y el estado del modelo se conservan en los tres.
 3. En el **sidebar** cambia entre las 3 cuentas ficticias (Débito Principal, Débito Ahorros, Tarjeta de Crédito): el saldo, el hero de gastos hormiga y los movimientos se actualizan.
 4. **Empieza en Básico**: pregunta _"¿cuánto he gastado?"_ o _"¿qué es un gasto hormiga?"_ y observa cómo Nano elige entre 3 componentes toy — sin gráficos ni protocolo, el concepto puro.
-5. **Sube a Intermedio**: en _"Resumen"_ verás el hero de gastos hormiga cambiar de color y el **slider "¿y si...?"**; en _"Asistente IA"_ pulsa un chip o escribe tu pregunta y verás el **skeleton → componente generado → narrativa en streaming**. Prueba el chip **"Resumen de mi mes"**: Nano elige **varias** piezas y se **apila una pantalla completa** (KPIs + reporte + hormiga + consejos).
+5. **Sube a Intermedio**: en _"Resumen"_ verás el hero de gastos hormiga con su veredicto de color (verde/ámbar/rojo según tus datos) y el **slider "¿y si...?"**; en _"Asistente IA"_ pulsa un chip o escribe tu pregunta y verás el **skeleton → componente generado → narrativa en streaming**. Prueba el chip **"Resumen de mi mes"**: Nano elige **varias** piezas y se **apila una pantalla completa** (KPIs + reporte + hormiga + consejos).
 6. **Termina en Avanzado**: el mismo chat, pero el componente lo materializa el **protocolo A2UI real**; el slider y los filtros hacen _round-trip_ (`updateDataModel`) y el toggle muestra el JSON A2UI estándar.
 7. Despliega _"Ver decisión"_ / _"Ver cómo decidió Nano"_ bajo cada respuesta para mostrar a tu audiencia la salida cruda del modelo y el JSON de componente + params.
 
