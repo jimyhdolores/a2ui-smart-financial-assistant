@@ -84,7 +84,18 @@ export class AccountSummary {
   private renderAntHero(acc: Account): void {
     const fallback = this.analytics.antVerdictFallback(acc);
     const data = this.analytics.antData(acc, fallback, 0, true);
-    this.renderer.processMessages(this.builder.build('AppAntExpense', data, ANT_SURFACE));
+
+    // El renderer es un singleton de app: la superficie sobrevive al ciclo de
+    // vida de este componente (las pestañas usan contenido perezoso, así que se
+    // destruye y re-crea al navegar). Si la superficie YA existe —re-montaje de
+    // la pestaña o cambio de cuenta— NO la recreamos: `createSurface` lanzaría
+    // "Surface already exists". En ese caso solo refrescamos su data-model.
+    const exists = this.renderer.surfaceGroup.getSurface(ANT_SURFACE);
+    this.renderer.processMessages(
+      exists
+        ? [this.builder.updateData(ANT_SURFACE, data)]
+        : this.builder.build('AppAntExpense', data, ANT_SURFACE),
+    );
   }
 
   // ─── Datos derivados (deterministas) ───────────────────────────────────────

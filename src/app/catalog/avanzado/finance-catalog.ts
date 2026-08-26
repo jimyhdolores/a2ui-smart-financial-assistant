@@ -4,20 +4,20 @@
  * ║                                                                       ║
  * ║  Mapea cada NOMBRE de componente del protocolo (`AppSpendingReport`,   ║
  * ║  `AppAntExpense`, …) a su clase Angular y a un schema de props. El      ║
- * ║  renderer oficial NO valida las props contra el schema en runtime (lo   ║
- * ║  resuelve por forma: literal | { path } | { call }), así que el schema  ║
- * ║  es METADATO didáctico: documenta qué campos acepta cada componente.    ║
- * ║  Por eso todos los campos usan `DynamicValueSchema` (literal o binding   ║
- * ║  de cualquier tipo: string, number, boolean, objeto o array).           ║
+ * ║  renderer SÍ valida las props contra este schema (`schema.safeParse`)   ║
+ * ║  como puerta previa a montar el componente, pero luego resuelve los     ║
+ * ║  valores por forma (literal | { path } | { call }) y descarta el        ║
+ * ║  resultado parseado. Por eso el schema es didáctico y PERMISIVO.        ║
+ * ║                                                                       ║
+ * ║  ⚠️ Se construye con la Zod de la app (v4). NO mezclar aquí los schemas ║
+ * ║  de `@a2ui/web_core` (Zod v3): combinar dos instancias/versiones de     ║
+ * ║  Zod en un mismo `z.object` rompe el `safeParse` con                    ║
+ * ║  «expected a Zod schema». Todos los campos son `z.any()` (aceptan       ║
+ * ║  literal o binding de cualquier tipo).                                   ║
  * ╚═══════════════════════════════════════════════════════════════════════╝
  */
 import { z } from 'zod';
 import { AngularCatalog } from '@a2ui/angular/v0_9';
-import {
-  AccessibilityAttributesSchema,
-  DynamicNumberSchema,
-  DynamicValueSchema,
-} from '@a2ui/web_core/v0_9';
 
 import { COMPONENT_FIELDS, FINANCE_CATALOG_ID } from '../../models/a2ui-protocol';
 import type { A2uiComponent } from '../../models/a2ui.model';
@@ -43,17 +43,18 @@ const COMPONENT_CLASS: Record<A2uiComponent, unknown> = {
 
 /**
  * Construye el schema de props de un componente a partir de sus campos.
- * Cada campo se declara como `DynamicValueSchema` (acepta literal o binding
- * `{ path }`), más las props comunes del protocolo (`weight`, `accessibility`).
+ * Cada campo es `z.any()` (acepta literal o binding `{ path }`/`{ call }` de
+ * cualquier tipo), más las props comunes del protocolo (`weight`,
+ * `accessibility`). Se usa la Zod de la app para no mezclar versiones.
  */
 function schemaFor(fields: readonly string[]): z.ZodTypeAny {
   const shape: Record<string, z.ZodTypeAny> = {
     // Props comunes A2UI (opcionales, presentes en cualquier componente).
-    weight: DynamicNumberSchema.optional() as unknown as z.ZodTypeAny,
-    accessibility: AccessibilityAttributesSchema.optional() as unknown as z.ZodTypeAny,
+    weight: z.any().optional(),
+    accessibility: z.any().optional(),
   };
   for (const field of fields) {
-    shape[field] = DynamicValueSchema.optional() as unknown as z.ZodTypeAny;
+    shape[field] = z.any().optional();
   }
   return z.object(shape);
 }
