@@ -50,10 +50,23 @@
 
   p {
     max-width: 520px;
-    margin: 0 auto 1.5rem;
+    margin: 0 auto 0.75rem;
     color: var(--mat-sys-on-surface-variant);
     font-size: 0.9rem;
     line-height: 1.5;
+  }
+
+  // Aclaracion secundaria: que hace (y que NO hace) este nivel.
+  .welcome-note {
+    max-width: 520px;
+    margin: 0 auto 1.5rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 12px;
+    border-left: 3px solid var(--mat-sys-primary);
+    background: color-mix(in srgb, var(--mat-sys-primary) 7%, transparent);
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.82rem;
+    text-align: left;
   }
 }
 
@@ -245,7 +258,7 @@
   }
 }
 
-.a2ui-json {
+.decision-json {
   font-size: 0.75rem;
 
   summary {

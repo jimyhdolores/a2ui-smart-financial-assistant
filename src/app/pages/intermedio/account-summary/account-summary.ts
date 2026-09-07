@@ -5,8 +5,12 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { NgApexchartsModule } from 'ng-apexcharts';
 
-import { AntVerdict } from '../../../models/a2ui.model';
-import { CATEGORY_META, CURRENCY, PAYMENT_METHOD_META } from '../../../models/finance.model';
+import {
+  AntVerdict,
+  CATEGORY_META,
+  CURRENCY,
+  PAYMENT_METHOD_META,
+} from '../../../models/finance.model';
 import { FinanceAnalyticsService } from '../../../services/finance-analytics';
 import { FinanceDataService } from '../../../services/finance-data';
 import { AntExpense } from '../../../catalog/intermedio/ant-expense/ant-expense';

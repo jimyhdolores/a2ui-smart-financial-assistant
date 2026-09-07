@@ -45,14 +45,16 @@ interface Suggestion {
 
 /**
  * ╔═══════════════════════════════════════════════════════════════════════╗
- * ║  Chat — pestaña "Asistente IA" (Generative UI conversacional)         ║
+ * ║  Chat — NIVEL 3: la misma decisión, servida por el protocolo A2UI      ║
  * ║                                                                       ║
- * ║  El usuario escribe en lenguaje natural. Gemini Nano (1) enruta a un  ║
- * ║  componente + params, y (2) redacta el análisis en streaming. La      ║
- * ║  matemática la hace TypeScript, que arma el stream A2UI v0.9 real      ║
- * ║  (createSurface/updateComponents/updateDataModel) y lo entrega al      ║
- * ║  renderer oficial `@a2ui/angular`. Cada turno abre su propia          ║
- * ║  superficie; el toggle muestra el JSONL A2UI de verdad.               ║
+ * ║  El enrutado es IDÉNTICO al del nivel Intermedio: el mismo `route()`  ║
+ * ║  y el mismo contrato de `ui-router.model.ts`. Lo único que cambia es  ║
+ * ║  el motor de render: en vez de NgComponentOutlet, TypeScript arma el  ║
+ * ║  stream A2UI v0.9 real (createSurface/updateComponents/                ║
+ * ║  updateDataModel) y lo entrega al renderer oficial `@a2ui/angular`.   ║
+ * ║  Cada turno abre su propia superficie — y cada sección la suya, para  ║
+ * ║  que su round-trip (slider, filtros) sea independiente; el toggle     ║
+ * ║  muestra el JSONL A2UI de verdad.                                     ║
  * ╚═══════════════════════════════════════════════════════════════════════╝
  */
 @Component({

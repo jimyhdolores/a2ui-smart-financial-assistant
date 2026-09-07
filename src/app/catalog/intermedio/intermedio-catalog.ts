@@ -1,5 +1,5 @@
 import { Type } from '@angular/core';
-import { A2uiComponent } from '../../models/a2ui.model';
+import { UiComponent } from '../../models/ui-router.model';
 import { AntExpense } from './ant-expense/ant-expense';
 import { CreditAdvisor } from './credit-advisor/credit-advisor';
 import { MovementsTable } from './movements-table/movements-table';
@@ -15,12 +15,17 @@ import { SpendingReport } from './spending-report/spending-report';
  * ║  Mapa que traduce el STRING que devuelve el LLM en una CLASE de       ║
  * ║  componente Angular real. Es el "catálogo de Lego" del agente.        ║
  * ║                                                                       ║
+ * ║  Es el registro del nivel INTERMEDIO: aquí Angular monta el           ║
+ * ║  componente directamente, sin protocolo de por medio. El Avanzado     ║
+ * ║  parte de la MISMA decisión del modelo pero la sirve por A2UI (ver    ║
+ * ║  `catalog/avanzado/finance-catalog.ts`).                              ║
+ * ║                                                                       ║
  * ║  👉 Añadir un componente nuevo al vocabulario del agente = UNA línea  ║
- * ║     aquí + añadirlo al union `A2uiComponent`. No se toca ningún       ║
+ * ║     aquí + añadirlo al union `UiComponent`. No se toca ningún         ║
  * ║     template: el <ng-container *ngComponentOutlet> lo renderiza solo. ║
  * ╚═══════════════════════════════════════════════════════════════════════╝
  */
-export const INTERMEDIO_REGISTRY: Record<A2uiComponent, Type<unknown>> = {
+export const INTERMEDIO_REGISTRY: Record<UiComponent, Type<unknown>> = {
   AppSpendingReport: SpendingReport,
   AppRecommendations: Recommendations,
   AppSavingsPlan: SavingsPlan,

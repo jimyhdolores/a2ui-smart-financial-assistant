@@ -20,7 +20,7 @@ import { z } from 'zod';
 import { AngularCatalog } from '@a2ui/angular/v0_9';
 
 import { COMPONENT_FIELDS, FINANCE_CATALOG_ID } from '../../models/a2ui-protocol';
-import type { A2uiComponent } from '../../models/a2ui.model';
+import type { UiComponent } from '../../models/ui-router.model';
 
 import { AntExpense } from './ant-expense/ant-expense';
 import { CreditAdvisor } from './credit-advisor/credit-advisor';
@@ -31,7 +31,7 @@ import { SavingsPlan } from './savings-plan/savings-plan';
 import { SpendingReport } from './spending-report/spending-report';
 
 /** Clase Angular que renderiza cada nombre de componente A2UI. */
-const COMPONENT_CLASS: Record<A2uiComponent, unknown> = {
+const COMPONENT_CLASS: Record<UiComponent, unknown> = {
   AppAntExpense: AntExpense,
   AppSpendingReport: SpendingReport,
   AppMovementsTable: MovementsTable,
@@ -64,7 +64,7 @@ function schemaFor(fields: readonly string[]): z.ZodTypeAny {
  * (`A2UI_RENDERER_CONFIG`). Devuelve un `AngularCatalog` con todos los componentes.
  */
 export function buildFinanceCatalog(): AngularCatalog {
-  const components = (Object.keys(COMPONENT_CLASS) as A2uiComponent[]).map((name) => ({
+  const components = (Object.keys(COMPONENT_CLASS) as UiComponent[]).map((name) => ({
     name,
     schema: schemaFor(COMPONENT_FIELDS[name]),
     component: COMPONENT_CLASS[name],

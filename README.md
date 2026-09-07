@@ -8,17 +8,46 @@ Es un asistente bancario ficticio pero realista: varias cuentas navegables desde
 
 La demo está organizada en **tres niveles de complejidad creciente** — Básico, Intermedio y Avanzado — accesibles desde un selector en el header. Los tres comparten el mismo cerebro (Gemini Nano) y la misma matemática determinista; lo que cambia es **cómo se materializa** la decisión del modelo en pantalla.
 
+### 🗺️ Índice
+
+**Si vienes de la charla y quieres entender el código, empieza por estas tres:**
+[⚠️ "A2UI" significa dos cosas](#️-lee-esto-primero-a2ui-significa-dos-cosas-distintas) · [🧭 Mapa de contratos](#-mapa-de-contratos-qué-es-obligatorio-y-qué-me-inventé-yo) · [📡 El protocolo A2UI, en concreto](#-el-protocolo-a2ui-en-concreto-nivel-avanzado)
+
+| | |
+| --- | --- |
+| [🎯 ¿De qué trata?](#-de-qué-trata-el-proyecto) | La idea, el reparto LLM/TypeScript y el flujo de un turno |
+| [🪜 Los tres niveles](#-los-tres-niveles-de-la-demo) | Qué enseña cada uno y en qué se diferencian |
+| [🧭 Mapa de contratos](#-mapa-de-contratos-qué-es-obligatorio-y-qué-me-inventé-yo) | Las tres estructuras JSON del proyecto y cuál es obligatoria |
+| [🎨 El catálogo generativo](#-el-catálogo-generativo) | Los componentes que el modelo puede invocar |
+| [📡 El protocolo A2UI](#-el-protocolo-a2ui-en-concreto-nivel-avanzado) | Qué viaja, la lista blanca y cuándo aporta de verdad |
+| [🏗️ Arquitectura](#️-arquitectura) | El árbol de carpetas comentado |
+| [⚙️ Requisitos](#️-requisitos-técnicos-para-probarlo) · [🚀 Puesta en marcha](#-puesta-en-marcha) | Chrome, flags, descarga del modelo y cómo recorrer la demo |
+| [🔍 Demostrar que la IA es real](#-cómo-demostrar-que-la-ia-es-real-para-la-charla) | Las pruebas en vivo para el público |
+
 ---
 
 ## 🎯 ¿De qué trata el proyecto?
 
 Este panel demuestra el patrón **Agent-to-UI (Interfaz Agente-Usuario)**:
 
-> En lugar de que el LLM genere **texto** para el usuario, el LLM decide **qué componente de interfaz renderizar** y con qué intención, devolviendo un JSON estricto. Angular actúa como el _runtime_ que materializa esa decisión en componentes reales y vivos.
+> En lugar de que el LLM genere **texto** para el usuario, el LLM decide **qué componente de interfaz renderizar** y con qué intención, devolviendo un JSON con esa decisión. Angular actúa como el _runtime_ que materializa esa decisión en componentes reales y vivos.
 
 Todo ocurre **100% en local, dentro del navegador**, usando el modelo **Gemini Nano** integrado en Chrome. No hay servidor, no hay API key, no hay costo ni latencia de red, y los datos del usuario nunca salen del dispositivo.
 
-> ⚠️ **Dos sentidos de "A2UI" en esta demo.** El **patrón** Agent-to-UI (el modelo elige la UI) se ve en los **tres** niveles. El **protocolo A2UI v0.9** — un estándar concreto con _surfaces_, _data-model_ y _actions_ — es solo el nivel **Avanzado**. El nivel Intermedio implementa la misma idea con un contrato "casero" mucho más simple.
+### ⚠️ Lee esto primero: "A2UI" significa dos cosas distintas
+
+Es **la** fuente de confusión de este proyecto, así que va por delante:
+
+| | 🧠 El **patrón** Agent-to-UI | 📡 El **protocolo** A2UI v0.9 |
+| --- | --- | --- |
+| Qué es | La idea general: *el modelo elige la UI, no el desarrollador* | Un estándar concreto de [a2ui.org](https://a2ui.org/), con _surfaces_, _data-model_ y _actions_ |
+| Quién lo define | Nadie — es un patrón de diseño | El proyecto A2UI (Google + comunidad) |
+| Dónde se ve | En los **tres** niveles | **Solo** en el nivel Avanzado |
+| En el código | `ui-router.model.ts`, `basico.model.ts` | `a2ui-protocol.ts`, `catalog/avanzado/`, `a2ui-*.service.ts` |
+
+Los niveles Básico e Intermedio implementan **el patrón** con un contrato inventado para esta demo. **No usan el protocolo.** Por eso ningún archivo suyo lleva "a2ui" en el nombre: si ves `a2ui` en una ruta, es nivel Avanzado.
+
+> 🎤 **Dicho en una frase:** _"Los tres niveles dejan que la IA elija la pantalla. Solo el último lo hace con un estándar abierto en vez de con código mío."_
 
 ### 🧠 La decisión de arquitectura clave: híbrido LLM + matemática local
 
@@ -76,9 +105,33 @@ Cada nivel es una **ruta** propia (`/basico`, `/intermedio`, `/avanzado`) y se c
 | 🔵 **Intermedio** | `/intermedio` | El catálogo rico completo con un **contrato casero**: el mismo patrón, con 7 componentes de verdad y gráficos, y **composición** de varias piezas. | `route()` elige **1..N** de **7 componentes** → `@for` + `NgComponentOutlet` + `INTERMEDIO_REGISTRY` (string → clase)  |
 | 🟣 **Avanzado**   | `/avanzado`   | Los **mismos 7 componentes** pero servidos por el **protocolo A2UI v0.9 real** (surfaces + data-model + actions bidireccionales).                  | `route()` (idéntico a Intermedio) → **una superficie A2UI por sección** → `<a2ui-v09-surface>` vía el renderer oficial |
 
-> 🎓 **La moraleja Intermedio → Avanzado:** _la decisión del modelo es exactamente la misma_ (ambos usan `route()` y el contrato de [`a2ui.model.ts`](src/app/models/a2ui.model.ts)). Lo único que cambia es el **mecanismo de render**: un `NgComponentOutlet` casero frente a un protocolo estándar con _round-trip_ agéntico. Primero enseñas la idea con lo mínimo, luego muestras cómo se ve "en serio".
+> 🎓 **La moraleja Intermedio → Avanzado:** _la decisión del modelo es exactamente la misma_ (ambos usan `route()` y el contrato de [`ui-router.model.ts`](src/app/models/ui-router.model.ts)). Lo único que cambia es el **mecanismo de render**: un `NgComponentOutlet` casero frente a un protocolo estándar con _round-trip_ agéntico. Primero enseñas la idea con lo mínimo, luego muestras cómo se ve "en serio".
+
+> 🏷️ **Por qué el contrato del enrutador NO se llama "A2UI".** Es a propósito: [`ui-router.model.ts`](src/app/models/ui-router.model.ts) es un contrato **propio** de esta demo (un JSON Schema de tres líneas), y lo usan por igual Intermedio y Avanzado. El protocolo A2UI de verdad vive aparte, en [`a2ui-protocol.ts`](src/app/models/a2ui-protocol.ts), y **solo** aparece en Avanzado. Así, al abrir cualquier archivo, el nombre te dice a qué nivel pertenece.
 
 El nivel **Básico** existe para explicar el concepto sin ruido: tres componentes de juguete (un texto, una tarjeta de un dato, una lista) y un enrutador que solo elige entre esos tres.
+
+---
+
+## 🧭 Mapa de contratos: qué es obligatorio y qué me inventé yo
+
+En el proyecto conviven **tres** estructuras JSON, y confundirlas es fácil porque las tres parecen "el formato". Solo una es obligatoria:
+
+| # | Estructura | ¿Obligatoria? | ¿Quién la impone? | Si se incumple |
+| --- | --- | --- | --- | --- |
+| 1️⃣ | **La decisión del modelo**<br>`{ sections: [ { componentToRender, params } ] }` | ❌ **No** — inventada para esta demo | Nadie: es una decisión de diseño | Nada; podría cambiarse mañana |
+| 2️⃣ | **Chrome cumpliendo esa decisión**<br>`responseConstraint` | ⚠️ Se _intenta_, sin garantía formal | Chrome, restringiendo la generación | `SyntaxError` — por eso el parseo es defensivo |
+| 3️⃣ | **Los mensajes A2UI**<br>`createSurface`, `updateComponents`… | ✅ **Sí, totalmente** | La especificación A2UI v0.9 | `A2uiStateError` / `A2uiValidationError` |
+
+**La diferencia de fondo:** a un LLM solo puedes _pedirle_ y luego validar — se equivoca, envuelve el JSON en markdown, inventa nombres. A tu propio código puedes _exigirle_, y si falla debe reventar ruidosamente, porque eso es un bug, no una alucinación.
+
+> 📌 **El malentendido más común:** *"Gemini Nano genera el A2UI"*. **No.** El modelo produce la estructura 1️⃣ — un objeto pequeño con nombres de componente. Es TypeScript quien lo traduce después a mensajes A2UI ([`A2uiMessageBuilder`](src/app/services/a2ui-message-builder.ts)). Fue una decisión deliberada: meterle a un modelo on-device el schema completo del protocolo le costaría casi toda su ventana de contexto y saldría peor.
+
+### Sobre `responseConstraint` (fila 2️⃣)
+
+La [Prompt API de Chrome](https://developer.chrome.com/docs/ai/structured-output-for-prompt-api) restringe la generación a tu JSON Schema, así que la salida es JSON parseable en vez de texto con markdown alrededor. Pero **la especificación no promete cumplimiento garantizado**: si el navegador no logra producir una respuesta conforme lanza `SyntaxError`, y si el schema usa palabras clave no soportadas, `NotSupportedError`.
+
+Por eso [`GenUiService`](src/app/services/gen-ui.ts) lleva cinturón y tirantes: `extractJson()` limpia posibles _fences_ de markdown y `parseDecision()` vuelve a comprobar que el nombre esté en `UI_COMPONENTS` aunque el `enum` ya debiera haberlo impedido.
 
 ---
 
@@ -94,7 +147,8 @@ El nivel **Básico** existe para explicar el concepto sin ruido: tres componente
 | **📡 Protocolo A2UI v0.9 real** — surfaces, data-model y actions con el renderer oficial                       | [`<a2ui-v09-surface>`](src/app/pages/avanzado/chat/chat.html) + [`finance-catalog.ts`](src/app/catalog/avanzado/finance-catalog.ts) + [`a2ui-protocol.ts`](src/app/models/a2ui-protocol.ts) |
 | **🔁 Round-trip agéntico** — el componente emite un `action.event` y TypeScript devuelve un `updateDataModel`  | [`FinanceComponent.dispatch()`](src/app/catalog/avanzado/finance-component.base.ts) + [`A2uiActionService`](src/app/services/a2ui-action.service.ts)                                        |
 | **🎯 Catálogos de componentes ("bloques de Lego"), uno por nivel**                                             | [`src/app/catalog/`](src/app/catalog/) — `BASICO_REGISTRY` · `INTERMEDIO_REGISTRY` · `buildFinanceCatalog()`                                                                                |
-| **📜 Contrato tipado + salida estructurada**                                                                   | [`a2ui.model.ts`](src/app/models/a2ui.model.ts) + [`basico.model.ts`](src/app/models/basico.model.ts) (`responseConstraint` / JSON Schema)                                                  |
+| **📜 Contrato tipado + salida estructurada**                                                                   | [`ui-router.model.ts`](src/app/models/ui-router.model.ts) + [`basico.model.ts`](src/app/models/basico.model.ts) (`responseConstraint` / JSON Schema)                                        |
+| **🗣️ Prompt engineering a la vista** — las tres "personalidades" del mismo modelo, en archivos propios         | [`services/prompts/`](src/app/services/prompts/) — enrutador básico · enrutador completo · asesor                                                                                           |
 | **🐜 Veredicto determinista de gastos hormiga** (sin depender del LLM)                                         | [`antVerdictFallback()`](src/app/services/finance-analytics.ts) — umbrales por tipo de cuenta, tendencia mes-a-mes y proyección                                                            |
 | **⬇️ Descarga del modelo bajo gesto del usuario** (en el header único)                                         | [`GenUiService.downloadModel()`](src/app/services/gen-ui.ts) + [`app.html`](src/app/app.html)                                                                                               |
 
@@ -146,6 +200,88 @@ Además incluye el **simulador "¿y si...?"**: un slider que recorta un % de los
 
 ---
 
+## 📡 El protocolo A2UI, en concreto (nivel Avanzado)
+
+### Qué viaja realmente
+
+Son **cuatro** tipos de mensaje JSON, y un mensaje solo puede llevar uno:
+
+| Mensaje | Qué hace | Dónde se genera |
+| --- | --- | --- |
+| `createSurface` | Abre un lienzo y declara qué catálogo se usa | [`A2uiMessageBuilder`](src/app/services/a2ui-message-builder.ts) |
+| `updateComponents` | La **estructura**: qué componente y de dónde saca cada prop | ídem |
+| `updateDataModel` | Los **datos** que rellenan esos punteros | ídem (`updateData` / `patch`) |
+| `deleteSurface` | Destruye un lienzo | — _no se usa: el chat conserva el historial_ |
+
+Un turno completo son estos tres objetos:
+
+```jsonc
+[
+  { "version": "v0.9",
+    "createSurface": { "surfaceId": "finance-1-0", "catalogId": "https://…/finance/v0_9" } },
+
+  // La ESTRUCTURA. Fíjate: aquí no viaja ni un número, solo punteros.
+  { "version": "v0.9",
+    "updateComponents": { "surfaceId": "finance-1-0",
+      "components": [ { "id": "root", "component": "AppQuickStats",
+                        "currency": { "path": "/data/currency" },
+                        "items":    { "path": "/data/items" } } ] } },
+
+  // Los DATOS, calculados en TypeScript.
+  { "version": "v0.9",
+    "updateDataModel": { "surfaceId": "finance-1-0", "path": "/data",
+                         "value": { "currency": "$", "items": [ … ] } } }
+]
+```
+
+Esa separación estructura/datos es la tesis del proyecto hecha protocolo — *"el LLM decide la intención, TypeScript pone el dinero"* — y permite luego cambiar un solo valor con `patch()` sin reenviar la pantalla entera. Puedes verlo en vivo: en el nivel Avanzado, despliega **"Ver protocolo A2UI"** bajo cualquier respuesta.
+
+### El catálogo es una lista blanca (aquí está la gracia)
+
+[`buildFinanceCatalog()`](src/app/catalog/avanzado/finance-catalog.ts) asocia cada nombre público con **una clase Angular tuya** y un contrato de props:
+
+```ts
+{ name: 'AppQuickStats', component: QuickStats, schema: … }
+```
+
+Ese catálogo **vive solo en el cliente y nunca viaja** — contiene clases, no es serializable. El emisor únicamente manda el string `"AppQuickStats"`. Si mandara `"AppLoQueSea"`, el renderer no lo encuentra y **no pinta nada** (lo verás como `Component type "…" not found in catalog` en consola).
+
+Ahí está el modelo de seguridad completo: **lo que viaja son datos, nunca código ejecutable**, y el emisor puede _pedir_ pero no _ampliar_ la lista. Por eso podrías aceptar UI de un agente en el que no confías del todo: lo peor que puede hacer es pedir algo que no le diste.
+
+> ⚠️ En esta demo los schemas de props son `z.any()` a propósito ([ver el comentario del archivo](src/app/catalog/avanzado/finance-catalog.ts)) — didácticos y permisivos. Si el emisor fuera un servidor ajeno, ahí querrías tipos reales para que un valor malformado reventara en la validación en vez de llegar al componente.
+
+### 🙋 Honestidad: en ESTA demo, A2UI casi no aporta
+
+Conviene decirlo, porque es la primera pregunta que sale:
+
+- El emisor y el receptor son **el mismo código**, en la misma página, escrito por la misma persona.
+- Los 7 componentes ya están en el bundle: no se recibe UI de nadie.
+- El nivel Avanzado añade superficies, data-model y punteros… para pintar **exactamente lo mismo** que el Intermedio.
+
+A2UI resuelve un problema que aquí no existe: *"¿cómo dejo que un agente que no controlo dibuje en mi pantalla sin darle las llaves?"*. Cobra sentido cuando **el agente vive en un servidor**, cuando **varios clientes distintos** (web, móvil, escritorio) comparten un mismo agente, o cuando la interfaz **le responde de vuelta**.
+
+El nivel Avanzado está aquí para enseñar **qué forma tiene ese problema**, en miniatura y sin riesgo. La moraleja de los tres niveles:
+
+> Lo casero funciona perfecto… hasta que el agente deja de ser tuyo. Ahí necesitas un contrato que ambos lados entiendan sin haber hablado nunca.
+
+### Dónde entraría un servidor
+
+Todo se junta en una línea de [`chat.ts`](src/app/pages/avanzado/chat/chat.ts): `this.renderer.processMessages(stream)`. Ese método **no envía nada** — es la boca de entrada del renderer. Llevarlo a HTTP es cambiar de dónde viene `stream`:
+
+```ts
+// HOY: los mensajes se arman aquí mismo
+const stream = this.builder.build(componente, data, surfaceId);
+this.renderer.processMessages(stream);
+
+// CON SERVIDOR: llegan por la red (MIME `application/a2ui+json`) — el resto es idéntico
+const stream = await (await fetch('/api/ui', { method: 'POST', body: … })).json();
+this.renderer.processMessages(stream);   // ← esta línea NO cambia
+```
+
+Ni el catálogo, ni los componentes, ni el template se tocan. **Eso** es lo que aporta el protocolo: el cliente ya está listo para recibir de cualquiera.
+
+---
+
 ## 🏗️ Arquitectura
 
 La app separa **lo que el modelo puede generar** (`catalog/`, segmentado por nivel) de **las páginas que lo alojan** (`pages/`). Así, mirando el árbol se entiende de un vistazo qué componentes usa cada nivel.
@@ -158,16 +294,20 @@ src/app/
 ├── app.config.ts                   # ⚙️  Providers raíz, incl. A2UI_RENDERER_CONFIG (nivel Avanzado)
 │
 ├── models/
-│   ├── finance.model.ts            # 💰 Dominio: Account, Transaction, Category, PaymentMethod + metadatos
-│   ├── a2ui.model.ts               # 📜 Contrato de enrutado: union A2uiComponent + JSON Schemas (router / veredicto)
-│   ├── basico.model.ts             # 📜 Contrato mínimo del nivel Básico: BasicoComponent + BASICO_ROUTER_SCHEMA
-│   └── a2ui-protocol.ts            # 📡 Protocolo A2UI v0.9: catalog id, campos por componente, actions, surface ids
+│   ├── finance.model.ts            # 💰 Dominio: Account, Transaction, Category, PaymentMethod, AntVerdict + metadatos
+│   ├── basico.model.ts             # 📜 🟢 Contrato del enrutador Básico: BasicoComponent + BASICO_ROUTER_SCHEMA
+│   ├── ui-router.model.ts          # 📜 🔵🟣 Contrato del enrutador (casero): UiComponent + UI_ROUTER_SCHEMA
+│   └── a2ui-protocol.ts            # 📡 🟣 Protocolo A2UI v0.9 REAL: catalog id, campos por componente, actions, surface ids
 │
 ├── services/
 │   ├── gen-ui.ts                   # 🧠 GenUiService: detección/descarga + route() + routeBasic() + answerStreaming()
+│   ├── prompts/                    # 🗣️  Los 3 system prompts, uno por archivo (fuera del servicio, para leerlos a gusto)
+│   │   ├── router-basico.prompt.ts     #   🟢 BASICO_ROUTER_PROMPT
+│   │   ├── router-completo.prompt.ts   #   🔵🟣 UI_ROUTER_PROMPT
+│   │   └── asesor.prompt.ts            #   🟢🔵🟣 ASESOR_PROMPT (narrativa en streaming)
 │   ├── finance-data.ts             # 🗃️  Dataset ficticio (3 cuentas, 6 meses de historial determinista) + signals
 │   ├── finance-analytics.ts        # 🧮 Matemática DETERMINISTA: categorías, hormiga, mes-a-mes, proyección, crédito, filtros
-│   ├── a2ui-message-builder.ts     # 📡 Arma el documento/mensaje A2UI que consume la surface (Avanzado)
+│   ├── a2ui-message-builder.ts     # 📡 🟣 Traduce la decisión del modelo a los 3 mensajes A2UI (Avanzado)
 │   └── a2ui-action.service.ts      # 🔁 Handler global de actions A2UI: recalcula en TS y devuelve updateDataModel (Avanzado)
 │
 ├── catalog/                        # 🎯 Los "bloques de Lego" que el LLM puede invocar, por nivel
@@ -273,8 +413,10 @@ Abre `http://localhost:4200/` en tu Chrome ya configurado (pasos anteriores). La
 3. En el **sidebar** cambia entre las 3 cuentas ficticias (Débito Principal, Débito Ahorros, Tarjeta de Crédito): el saldo, el hero de gastos hormiga y los movimientos se actualizan.
 4. **Empieza en Básico**: pregunta _"¿cuánto he gastado?"_ o _"¿qué es un gasto hormiga?"_ y observa cómo Nano elige entre 3 componentes toy — sin gráficos ni protocolo, el concepto puro.
 5. **Sube a Intermedio**: en _"Resumen"_ verás el hero de gastos hormiga con su veredicto de color (verde/ámbar/rojo según tus datos) y el **slider "¿y si...?"**; en _"Asistente IA"_ pulsa un chip o escribe tu pregunta y verás el **skeleton → componente generado → narrativa en streaming**. Prueba el chip **"Resumen de mi mes"**: Nano elige **varias** piezas y se **apila una pantalla completa** (KPIs + reporte + hormiga + consejos).
-6. **Termina en Avanzado**: el mismo chat, pero el componente lo materializa el **protocolo A2UI real**; el slider y los filtros hacen _round-trip_ (`updateDataModel`) y el toggle muestra el JSON A2UI estándar.
-7. Despliega _"Ver decisión"_ / _"Ver cómo decidió Nano"_ bajo cada respuesta para mostrar a tu audiencia la salida cruda del modelo y el JSON de componente + params.
+6. **Termina en Avanzado**: el mismo chat y **la misma decisión del modelo**, pero el componente lo materializa el **protocolo A2UI real**; el slider y los filtros hacen _round-trip_ (`updateDataModel`).
+7. Despliega el toggle bajo cada respuesta para enseñar a tu audiencia la salida cruda del modelo:
+   - En **Básico** e **Intermedio** se llama _"Ver cómo decidió Nano"_ → texto crudo + decisión parseada (componente + params).
+   - En **Avanzado** se llama _"Ver protocolo A2UI"_ → lo mismo, **más** el stream `createSurface / updateComponents / updateDataModel`. Es la comparación más didáctica de la demo: misma decisión arriba, protocolo abajo.
 
 ---
 
@@ -318,7 +460,7 @@ Abre `chrome://on-device-internals` → pestaña **"Event Logs"** (o _Model exec
 La app está **instrumentada** para exponer cada llamada al modelo (ver [`GenUiService`](src/app/services/gen-ui.ts)):
 
 - **⏱️ Badge de tiempo de inferencia** — cada respuesta muestra _"NNN ms · on-device"_. Un `if/else` sería ~0 ms; ver cientos de ms de cómputo real prueba que el modelo pensó. Se mide con `performance.now()` alrededor de `session.prompt()`.
-- **📥 Salida cruda + JSON** — al desplegar _"Ver decisión"_ se muestra **el texto tal cual lo devolvió el modelo** (antes del parseo) junto a la decisión ya parseada (componente + params).
+- **📥 Salida cruda + JSON** — al desplegar el toggle (_"Ver cómo decidió Nano"_, o _"Ver protocolo A2UI"_ en Avanzado) se muestra **el texto tal cual lo devolvió el modelo** (antes del parseo) junto a la decisión ya parseada (componente + params).
 - **📋 Logs en la consola del navegador** — cada enrutado imprime un grupo con el _contexto enviado_, la _salida cruda_, el _tiempo de inferencia_ y la _decisión parseada_. Abre **DevTools → Console** durante la charla para mostrarlo en vivo.
 
 ---
@@ -328,7 +470,7 @@ La app está **instrumentada** para exponer cada llamada al modelo (ver [`GenUiS
 - **Rutas perezosas por nivel.** Cada nivel se carga con `loadComponent` ([`app.routes.ts`](src/app/app.routes.ts)) y genera su propio _chunk_ (`basico-page`, `intermedio-page`, `avanzado-page`). Así el nivel Básico arranca ligero, sin arrastrar ApexCharts ni las 6 tarjetas del catálogo, que solo se descargan al entrar a Intermedio/Avanzado.
 - **ApexCharts se carga de forma perezosa.** `ng-apexcharts` importa dinámicamente `apexcharts/client` y registra `window.ApexCharts` por sí mismo, así que **no** hay script global en `angular.json` (`"scripts": []`). El motor de gráficos (~800 kB) solo se descarga cuando se renderiza el primer componente con gráfico.
 - **El renderer A2UI vive en la raíz.** `A2UI_RENDERER_CONFIG` se provee en [`app.config.ts`](src/app/app.config.ts) y `A2uiRendererService` es `providedIn: 'root'`, así que el nivel Avanzado puede cargarse de forma perezosa sin problemas de inyección. Es inocuo para Básico/Intermedio.
-- **Presupuestos** (`angular.json`): _initial_ 1 MB warn / 1.5 MB error; _anyComponentStyle_ 6 kB warn / 8 kB error. El build de producción pasa sin advertencias (_bundle_ inicial ~960 kB).
+- **Presupuestos** (`angular.json`): _initial_ 1 MB warn / 1.5 MB error; _anyComponentStyle_ 6 kB warn / 8 kB error. El _bundle_ inicial ronda hoy los **1,31 MB** (254 kB transferidos), así que el build emite la advertencia del presupuesto de 1 MB pero se completa correctamente.
 
 ---
 
@@ -345,7 +487,18 @@ pnpm test         # Pruebas unitarias
 
 ## 📚 Referencias
 
+### Protocolo A2UI (nivel Avanzado)
+
+- [a2ui.org — sitio del proyecto](https://a2ui.org/) · [¿Qué es A2UI?](https://a2ui.org/introduction/what-is-a2ui/) · [Especificación v0.9](https://a2ui.org/specification/v0.9-a2ui/)
+- [Guía de desarrollo de agentes](https://a2ui.org/guides/agent-development/) — el enfoque que recomienda el proyecto es **prompt + validación posterior**, no salida forzada; advierte expresamente que los modelos envuelven el JSON en _fences_ de markdown y cometen otros errores. (La v0.8 era _"Structured Output first"_; la v0.9 marcó un giro a _"Prompt-First"_.)
+- [`a2ui-project/a2ui` en GitHub](https://github.com/a2ui-project/a2ui)
+
+### Prompt API de Chrome (los tres niveles)
+
 - [Prompt API — Guía oficial de Chrome (GoogleChrome/modern-web-guidance)](https://github.com/GoogleChrome/modern-web-guidance/blob/main/skills/modern-web-guidance/guides/built-in-ai/language-model.md)
+- [Structured output para la Prompt API](https://developer.chrome.com/docs/ai/structured-output-for-prompt-api) — el `responseConstraint` que usan los enrutadores
+- [Explainer de la especificación (webmachinelearning/prompt-api)](https://github.com/webmachinelearning/prompt-api) — define los modos de fallo: `SyntaxError` si no logra cumplir el schema, `NotSupportedError` si usa keywords no soportadas
+- [JSON Schema Tester](https://googlechrome.github.io/samples/json-schema-tester/) — para comprobar si un schema funciona con la Prompt API (Chrome no publica la lista de keywords soportadas)
 - [Build a sentiment classifier with Chrome's Prompt API in Angular (dev.to)](https://dev.to/railsstudent/build-a-sentiment-classifier-with-chromes-prompt-api-in-angular-43ek)
 - [Chrome Gemini Nano / Prompt API — requisitos (May 2026)](https://www.computeleap.com/blog/chrome-gemini-nano-prompt-api-window-ai-may-2026/)
 - [Dónde guarda Chrome el modelo: el archivo `weights.bin` de Gemini Nano (Android Authority)](https://www.androidauthority.com/google-chrome-weights-bin-ai-model-download-explained-3664043/)

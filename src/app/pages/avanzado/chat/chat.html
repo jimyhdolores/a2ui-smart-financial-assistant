@@ -2,14 +2,19 @@
   <!-- ── Historial de mensajes ─────────────────────────────────────────────── -->
   <div class="messages" #scroller>
     @if (messages().length === 0) {
-      <!-- Estado inicial: bienvenida + sugerencias -->
+      <!-- Estado inicial: bienvenida didáctica + sugerencias -->
       <div class="welcome">
-        <div class="welcome-icon"><mat-icon>auto_awesome</mat-icon></div>
-        <h2>Pregúntame sobre tus finanzas</h2>
+        <div class="welcome-icon"><mat-icon>hub</mat-icon></div>
+        <h2>Nivel 3 · La misma decisión, servida por el protocolo A2UI</h2>
         <p>
-          Escribo con <strong>Gemini Nano</strong> en tu dispositivo: entiendo tu intención y te
-          respondo con la interfaz adecuada. Los números los calcula la app; la IA no ve tus datos
-          crudos.
+          <strong>Gemini Nano</strong> decide exactamente lo mismo que en el nivel 2 — los mismos
+          siete componentes, la misma capacidad de combinarlos. Lo único que cambia es
+          <strong>cómo llega esa decisión a la pantalla</strong>: en lugar de pintar el componente a
+          mano, la app la traduce al <strong>protocolo A2UI</strong>, un estándar abierto.
+        </p>
+        <p class="welcome-note">
+          La ventaja: la conversación va en <em>los dos sentidos</em>. Mueve el slider de una
+          tarjeta y verás que la interfaz le responde al agente, y este recalcula.
         </p>
         <div class="suggest-grid">
           @for (s of suggestions; track s.query) {
@@ -62,7 +67,7 @@
                 </div>
               }
 
-              <!-- Telemetría + JSON A2UI -->
+              <!-- Telemetría + protocolo A2UI -->
               <div class="msg-foot">
                 @if (m.durationMs != null) {
                   <span class="ms-badge" title="Sin red — 100% en tu dispositivo">
@@ -71,7 +76,7 @@
                   </span>
                 }
                 @if (m.a2uiStream) {
-                  <details class="a2ui-json">
+                  <details class="decision-json">
                     <summary>Ver protocolo A2UI</summary>
                     @if (m.raw) {
                       <p class="json-label">Salida de Gemini Nano (enrutado, on-device):</p>

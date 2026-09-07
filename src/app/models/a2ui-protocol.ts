@@ -2,8 +2,10 @@
  * ╔═══════════════════════════════════════════════════════════════════════╗
  * ║  PROTOCOLO A2UI v0.9 — constantes y descriptores del dominio "finance" ║
  * ║                                                                       ║
- * ║  A diferencia de `a2ui.model.ts` (el contrato del ENRUTADOR de Nano:   ║
- * ║  qué componente + params), este archivo describe el PROTOCOLO real     ║
+ * ║  ⚠️  Este SÍ es el protocolo A2UI, y solo lo usa el nivel Avanzado.     ║
+ * ║  A diferencia de `ui-router.model.ts` (el contrato casero del          ║
+ * ║  ENRUTADOR de Nano: qué componentes + params, común a Intermedio y     ║
+ * ║  Avanzado), este archivo describe el PROTOCOLO real                     ║
  * ║  a2ui.org v0.9 que TypeScript emite hacia el renderer oficial:         ║
  * ║  ids de superficie/catálogo, el root del data-model, los nombres de    ║
  * ║  las `action.event`, y — clave — el mapa `COMPONENT_FIELDS` con los     ║
@@ -15,7 +17,7 @@
  * ╚═══════════════════════════════════════════════════════════════════════╝
  */
 import type { A2uiMessage } from '@a2ui/web_core/v0_9';
-import type { A2uiComponent } from './a2ui.model';
+import type { UiComponent } from './ui-router.model';
 
 /** Re-export del tipo del envelope A2UI (createSurface/updateComponents/…). */
 export type { A2uiMessage };
@@ -55,7 +57,7 @@ export type A2uiActionName = (typeof A2UI_ACTIONS)[keyof typeof A2UI_ACTIONS];
  * (Los campos condicionales de crédito se listan siempre: si el data-model no
  * los trae, la prop resuelve a `undefined` y el componente aplica su fallback.)
  */
-export const COMPONENT_FIELDS: Record<A2uiComponent, readonly string[]> = {
+export const COMPONENT_FIELDS: Record<UiComponent, readonly string[]> = {
   AppQuickStats: ['currency', 'items'],
   AppAntExpense: [
     'status',

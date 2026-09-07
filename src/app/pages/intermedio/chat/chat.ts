@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
 import { INTERMEDIO_REGISTRY } from '../../../catalog/intermedio/intermedio-catalog';
-import { A2uiComponent } from '../../../models/a2ui.model';
+import { UiComponent } from '../../../models/ui-router.model';
 import { FinanceAnalyticsService } from '../../../services/finance-analytics';
 import { FinanceDataService } from '../../../services/finance-data';
 import { CompositeDecision, GenUiService } from '../../../services/gen-ui';
@@ -21,7 +21,7 @@ interface ChatMessage {
   /** Decisión de UI del LLM: 1..N secciones a componer (solo asistente). */
   decision?: CompositeDecision;
   /** Componentes a apilar, cada uno con su `data` calculado en TypeScript. */
-  blocks?: Array<{ component: A2uiComponent; data: Record<string, unknown> }>;
+  blocks?: Array<{ component: UiComponent; data: Record<string, unknown> }>;
   /** Salida cruda del modelo (para el toggle didáctico). */
   raw?: string;
   /** Duración de la inferencia de enrutado, en ms. */
@@ -43,13 +43,16 @@ interface Suggestion {
 
 /**
  * ╔═══════════════════════════════════════════════════════════════════════╗
- * ║  Chat — pestaña "Asistente IA" (Generative UI conversacional)         ║
+ * ║  Chat — NIVEL 2: catálogo rico, render casero (sin protocolo A2UI)    ║
  * ║                                                                       ║
- * ║  El usuario escribe en lenguaje natural. Gemini Nano (1) enruta a un  ║
- * ║  componente + params, y (2) redacta el análisis en streaming. La      ║
- * ║  matemática la hace TypeScript; el componente se pinta con            ║
- * ║  NgComponentOutlet. Cada respuesta muestra los ms de inferencia y un  ║
- * ║  toggle con el JSON A2UI real.                                        ║
+ * ║  El usuario escribe en lenguaje natural. Gemini Nano (1) enruta a     ║
+ * ║  1..N componentes + params, y (2) redacta el análisis en streaming.   ║
+ * ║  La matemática la hace TypeScript; los componentes se apilan con      ║
+ * ║  `@for` + NgComponentOutlet sobre INTERMEDIO_REGISTRY. Cada respuesta ║
+ * ║  muestra los ms de inferencia y un toggle con la decisión del modelo. ║
+ * ║                                                                       ║
+ * ║  El nivel Avanzado parte de esta MISMA decisión (`route()`) y solo    ║
+ * ║  cambia el motor de render por el protocolo A2UI v0.9.                ║
  * ╚═══════════════════════════════════════════════════════════════════════╝
  */
 @Component({

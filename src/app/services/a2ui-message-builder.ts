@@ -6,7 +6,7 @@ import {
   FINANCE_CATALOG_ID,
   type A2uiMessage,
 } from '../models/a2ui-protocol';
-import type { A2uiComponent } from '../models/a2ui.model';
+import type { UiComponent } from '../models/ui-router.model';
 
 /** Id del nodo raíz del árbol de componentes de cada superficie. */
 const ROOT_ID = 'root';
@@ -34,11 +34,7 @@ export class A2uiMessageBuilder {
    * Stream completo de un turno: abre superficie, declara el componente con
    * sus campos bindeados y rellena el data-model.
    */
-  build(
-    component: A2uiComponent,
-    data: Record<string, unknown>,
-    surfaceId: string,
-  ): A2uiMessage[] {
+  build(component: UiComponent, data: Record<string, unknown>, surfaceId: string): A2uiMessage[] {
     return [
       this.createSurface(surfaceId),
       this.updateComponents(component, surfaceId),
@@ -47,7 +43,7 @@ export class A2uiMessageBuilder {
   }
 
   /** Mensaje `createSurface` para una superficie del catálogo de finanzas. */
-  createSurface(surfaceId: string): A2uiMessage {
+  private createSurface(surfaceId: string): A2uiMessage {
     return {
       version: 'v0.9',
       createSurface: { surfaceId, catalogId: FINANCE_CATALOG_ID },
@@ -58,7 +54,7 @@ export class A2uiMessageBuilder {
    * Mensaje `updateComponents`: un único nodo raíz (`id:"root"`) del tipo del
    * componente, con cada campo declarado como binding `{ path: "/data/<campo>" }`.
    */
-  updateComponents(component: A2uiComponent, surfaceId: string): A2uiMessage {
+  private updateComponents(component: UiComponent, surfaceId: string): A2uiMessage {
     const node: Record<string, unknown> = { id: ROOT_ID, component };
     for (const field of COMPONENT_FIELDS[component]) {
       node[field] = { path: `${DATA_ROOT}/${field}` };

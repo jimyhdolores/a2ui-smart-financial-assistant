@@ -120,3 +120,22 @@ export const ACCOUNT_ICON: Record<AccountKind, string> = {
   ahorros: 'savings',
   credito: 'credit_card',
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  🐜 Gastos hormiga
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Estados posibles del veredicto de gastos hormiga. */
+export type AntStatus = 'good' | 'warning' | 'risk';
+
+/**
+ * Veredicto estructurado sobre los gastos hormiga: cambia el color y el mensaje
+ * del hero. Lo calcula TypeScript por umbrales en `antVerdictFallback()`
+ * (`services/finance-analytics.ts`), sin depender del modelo — así la demo
+ * muestra el estado correcto al instante, esté Gemini Nano listo o no.
+ */
+export interface AntVerdict {
+  status: AntStatus;
+  headline: string;
+  message: string;
+}

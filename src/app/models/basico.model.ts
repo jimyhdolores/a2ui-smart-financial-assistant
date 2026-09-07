@@ -1,12 +1,12 @@
 /**
  * ╔═══════════════════════════════════════════════════════════════════════╗
- * ║  CONTRATO BÁSICO  (nivel didáctico 1)                                  ║
+ * ║  CONTRATO DEL ENRUTADOR BÁSICO  (nivel 1)                              ║
  * ║                                                                       ║
  * ║  Versión mínima del contrato de enrutamiento: Gemini Nano elige entre ║
  * ║  solo TRES componentes "toy" (texto, un dato, una lista). Es el mismo  ║
- * ║  principio que `a2ui.model.ts` (el LLM decide QUÉ mostrar; TypeScript  ║
- * ║  pone los números), reducido al esqueleto para explicar el concepto    ║
- * ║  sin gráficos ni protocolo A2UI de por medio.                          ║
+ * ║  principio que `ui-router.model.ts` (el LLM decide QUÉ mostrar;        ║
+ * ║  TypeScript pone los números), reducido al esqueleto para explicar el  ║
+ * ║  concepto sin gráficos ni protocolo A2UI de por medio.                 ║
  * ╚═══════════════════════════════════════════════════════════════════════╝
  */
 
@@ -35,9 +35,13 @@ export interface BasicoRouteResult {
 
 /**
  * JSON Schema del ENRUTADOR BÁSICO (responseConstraint). Espejo reducido de
- * `A2UI_ROUTER_SCHEMA`: en Chrome moderno obliga al modelo a producir
- * exactamente esta forma (structured output nativo). `params` queda abierto
- * porque su contenido depende de la intención.
+ * `UI_ROUTER_SCHEMA`: Chrome restringe la generación a esta forma (structured
+ * output nativo), aunque sin garantía formal de cumplimiento — ver la nota y
+ * las referencias en `ui-router.model.ts`. `params` queda abierto porque su
+ * contenido depende de la intención.
+ *
+ * El system prompt que acompaña a este schema es `BASICO_ROUTER_PROMPT`
+ * (`services/prompts/router-basico.prompt.ts`).
  */
 export const BASICO_ROUTER_SCHEMA = {
   type: 'object',

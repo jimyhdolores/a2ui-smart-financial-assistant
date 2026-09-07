@@ -8,7 +8,7 @@ import {
   PaymentMethod,
   Transaction,
 } from '../models/finance.model';
-import { A2uiComponent } from '../models/a2ui.model';
+import { UiComponent } from '../models/ui-router.model';
 import { FinanceDataService } from './finance-data';
 
 /** Ventana temporal de análisis. */
@@ -319,7 +319,7 @@ export class FinanceAnalyticsService {
   // ═══════════════════════════════════════════════════════════════════════════
 
   buildData(
-    component: A2uiComponent,
+    component: UiComponent,
     params: Record<string, unknown>,
     account: Account,
   ): Record<string, unknown> {

@@ -2,14 +2,19 @@
   <!-- ── Historial de mensajes ─────────────────────────────────────────────── -->
   <div class="messages" #scroller>
     @if (messages().length === 0) {
-      <!-- Estado inicial: bienvenida + sugerencias -->
+      <!-- Estado inicial: bienvenida didáctica + sugerencias -->
       <div class="welcome">
         <div class="welcome-icon"><mat-icon>auto_awesome</mat-icon></div>
-        <h2>Pregúntame sobre tus finanzas</h2>
+        <h2>Nivel 2 · La misma idea, con un catálogo de verdad</h2>
         <p>
-          Escribo con <strong>Gemini Nano</strong> en tu dispositivo: entiendo tu intención y te
-          respondo con la interfaz adecuada. Los números los calcula la app; la IA no ve tus datos
-          crudos.
+          El mismo cerebro del nivel 1, pero ahora <strong>Gemini Nano</strong> elige entre
+          <strong>siete componentes reales</strong> con gráficos — y puede
+          <strong>combinar varios</strong> en una sola respuesta para armarte una pantalla completa.
+          Los números los sigue calculando la app; la IA no ve tus datos crudos.
+        </p>
+        <p class="welcome-note">
+          Aquí todavía <em>no</em> aparece el protocolo A2UI: la app toma el nombre que dijo el
+          modelo y pinta ese componente directamente. Eso llega en el nivel 3.
         </p>
         <div class="suggest-grid">
           @for (s of suggestions; track s.query) {
@@ -65,7 +70,7 @@
                 </div>
               }
 
-              <!-- Telemetría + JSON A2UI -->
+              <!-- Telemetría + decisión del modelo -->
               <div class="msg-foot">
                 @if (m.durationMs != null) {
                   <span class="ms-badge" title="Sin red — 100% en tu dispositivo">
@@ -74,8 +79,8 @@
                   </span>
                 }
                 @if (m.decision) {
-                  <details class="a2ui-json">
-                    <summary>Ver decisión A2UI</summary>
+                  <details class="decision-json">
+                    <summary>Ver cómo decidió Nano</summary>
                     @if (m.raw) {
                       <p class="json-label">Salida cruda del modelo:</p>
                       <pre>{{ m.raw }}</pre>
