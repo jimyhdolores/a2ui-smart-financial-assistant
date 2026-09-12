@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { readNum, readStr } from '../../shared/data-access';
 
 /**
- * 📊 StatCard — un solo número, en grande.
+ * StatCard — un solo número, en grande.
  *
  * Nivel Básico. Gemini Nano eligió QUÉ métrica mostrar (saldo, gasto, ingreso o
  * mayor gasto); TypeScript calculó el número con `FinanceAnalyticsService`. El

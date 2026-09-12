@@ -145,7 +145,7 @@ export class Chat {
   }
 
   /**
-   * 🧠 Flujo completo de un turno: enruta (componente + params), calcula el
+   * Flujo completo de un turno: enruta (componente + params), calcula el
    * `data` con TypeScript, emite el stream A2UI a su superficie y stream-ea la
    * narrativa.
    */

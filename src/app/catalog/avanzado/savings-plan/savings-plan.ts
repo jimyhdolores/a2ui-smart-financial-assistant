@@ -8,7 +8,7 @@ import { FinanceComponent } from '../finance-component.base';
 import { ChartConfig, radialChart } from '../../shared/chart-theme';
 
 /**
- * 🎯 AppSavingsPlan — meta de ahorro con progreso y simulación.
+ * AppSavingsPlan — meta de ahorro con progreso y simulación.
  *
  * Progreso radial hacia la meta, ahorro mensual potencial (derivado de recortar
  * gastos hormiga) y una proyección a 3 meses. El LLM elige mostrarlo cuando el

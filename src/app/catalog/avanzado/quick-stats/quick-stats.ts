@@ -14,7 +14,7 @@ interface StatItem {
 }
 
 /**
- * 📌 AppQuickStats — tira compacta de KPIs (versión A2UI / Avanzado).
+ * AppQuickStats — tira compacta de KPIs (versión A2UI / Avanzado).
  *
  * Idéntica a la casera en plantilla y estilos; solo cambia la FUENTE de datos:
  * aquí cada campo llega resuelto desde el data-model por JSON Pointer y se lee

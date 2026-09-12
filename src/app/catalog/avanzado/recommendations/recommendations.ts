@@ -17,7 +17,7 @@ interface Alert {
 }
 
 /**
- * 💡 AppRecommendations — consejos accionables.
+ * AppRecommendations — consejos accionables.
  *
  * Chip de nivel de riesgo, tarjetas de consejo con impacto estimado (dinero que
  * podrías liberar al mes) y alertas. Los consejos e importes son deterministas;

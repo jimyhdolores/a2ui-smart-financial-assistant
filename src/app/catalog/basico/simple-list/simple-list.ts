@@ -16,7 +16,7 @@ interface ListItem {
 }
 
 /**
- * 📃 SimpleList — una lista de movimientos recientes.
+ * SimpleList — una lista de movimientos recientes.
  *
  * Nivel Básico. Nano decidió mostrar la lista (y cuántos ítems); TypeScript
  * seleccionó y formateó los movimientos reales. Ingresos en verde con "+".

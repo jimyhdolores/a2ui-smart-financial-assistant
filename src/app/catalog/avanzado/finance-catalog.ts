@@ -9,7 +9,7 @@
  * ║  valores por forma (literal | { path } | { call }) y descarta el        ║
  * ║  resultado parseado. Por eso el schema es didáctico y PERMISIVO.        ║
  * ║                                                                       ║
- * ║  ⚠️ Se construye con la Zod de la app (v4). NO mezclar aquí los schemas ║
+ * ║  Se construye con la Zod de la app (v4). NO mezclar aquí los schemas  ║
  * ║  de `@a2ui/web_core` (Zod v3): combinar dos instancias/versiones de     ║
  * ║  Zod en un mismo `z.object` rompe el `safeParse` con                    ║
  * ║  «expected a Zod schema». Todos los campos son `z.any()` (aceptan       ║

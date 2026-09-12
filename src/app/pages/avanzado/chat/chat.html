@@ -58,7 +58,7 @@
                 <p class="narrative">{{ m.text }}<span class="cursor" [class.on]="m.streaming"></span></p>
               }
 
-              <!-- 🎨 Superficies A2UI del turno: 1..N apiladas (renderer oficial) -->
+              <!-- Superficies A2UI del turno: 1..N apiladas (renderer oficial) -->
               @if (m.surfaces?.length) {
                 <div class="generated">
                   @for (sid of m.surfaces; track sid) {

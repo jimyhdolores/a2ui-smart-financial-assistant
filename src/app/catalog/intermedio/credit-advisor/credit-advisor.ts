@@ -8,7 +8,7 @@ import { ChartConfig, gaugeChart, STATUS_COLOR } from '../../shared/chart-theme'
 import { readNum, readStr } from '../../shared/data-access';
 
 /**
- * 💳 AppCreditAdvisor — salud crediticia y simulación de compra a crédito.
+ * AppCreditAdvisor — salud crediticia y simulación de compra a crédito.
  *
  * Gauge radial de capacidad de pago, barra de endeudamiento (uso de la línea),
  * cuota mensual estimada y veredicto. Toda la aritmética (cuota = precio·1.15 /

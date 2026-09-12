@@ -10,9 +10,9 @@ import { FinanceComponent } from '../finance-component.base';
 import { barChart, ChartConfig } from '../../shared/chart-theme';
 
 /**
- * 🐜 AppAntExpense — HERO de gastos hormiga.
+ * AppAntExpense — HERO de gastos hormiga.
  *
- * Cambia por completo de aspecto según el veredicto (🟢 good / 🟡 warning / 🔴 risk):
+ * Cambia por completo de aspecto según el veredicto (good / warning / risk):
  * borde, avatar, tinte de fondo e icono. Muestra el total hormiga, la comparación
  * con el mes anterior, el rango de fecha de agotamiento del saldo y un mini-gráfico
  * por categoría. El slider "¿y si…?" emite una `action.event` de A2UI con el % de

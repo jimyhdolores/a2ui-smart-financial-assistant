@@ -1,5 +1,5 @@
 /// <reference types="dom-chromium-ai" />
-// ⬆️ Trae los tipos globales de la IA integrada de Chrome (`LanguageModel`, `Availability`, etc.).
+// Trae los tipos globales de la IA integrada de Chrome (`LanguageModel`, `Availability`, etc.).
 // Como `tsconfig.app.json` usa `"types": []`, debemos referenciarlos explícitamente aquí.
 
 import { bootstrapApplication } from '@angular/platform-browser';

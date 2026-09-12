@@ -8,7 +8,7 @@
  * ║  matemática (los números reales) la pone TypeScript de forma          ║
  * ║  determinista a partir de esos parámetros.                            ║
  * ║                                                                       ║
- * ║  ⚠️  NO CONFUNDIR CON EL PROTOCOLO A2UI. Este es un contrato PROPIO    ║
+ * ║  NO CONFUNDIR CON EL PROTOCOLO A2UI. Este es un contrato PROPIO       ║
  * ║  de la demo — deliberadamente mínimo — que usan por igual el nivel     ║
  * ║  Intermedio y el Avanzado: en ambos la decisión del modelo es la       ║
  * ║  misma. Lo que cambia es cómo se materializa esa decisión:            ║
@@ -23,13 +23,13 @@
 
 /** Componentes que el LLM puede "invocar". Deben coincidir con el registro. */
 export type UiComponent =
-  | 'AppSpendingReport' // 📊 reporte de gastos (KPIs + dona + tendencia + tabla)
-  | 'AppRecommendations' // 💡 consejos + nivel de riesgo + alertas
-  | 'AppSavingsPlan' // 🎯 metas de ahorro + progreso + simulación
-  | 'AppCreditAdvisor' // 💳 capacidad de crédito + endeudamiento + cuota
-  | 'AppMovementsTable' // 📋 tabla de movimientos filtrada
-  | 'AppAntExpense' // 🐜 análisis de gastos hormiga (hero que cambia de color)
-  | 'AppQuickStats'; // 📌 tira compacta de KPIs (cabecera natural de un panel compuesto)
+  | 'AppSpendingReport' // reporte de gastos (KPIs + dona + tendencia + tabla)
+  | 'AppRecommendations' // consejos + nivel de riesgo + alertas
+  | 'AppSavingsPlan' // metas de ahorro + progreso + simulación
+  | 'AppCreditAdvisor' // capacidad de crédito + endeudamiento + cuota
+  | 'AppMovementsTable' // tabla de movimientos filtrada
+  | 'AppAntExpense' // análisis de gastos hormiga (hero que cambia de color)
+  | 'AppQuickStats'; // tira compacta de KPIs (cabecera natural de un panel compuesto)
 
 /** Lista de componentes válidos, usada para validar la salida del modelo en runtime. */
 export const UI_COMPONENTS: readonly UiComponent[] = [
@@ -45,7 +45,7 @@ export const UI_COMPONENTS: readonly UiComponent[] = [
 /**
  * JSON Schema del ENRUTADOR (responseConstraint del chat).
  *
- * ✨ Chrome restringe la generación a esta forma (structured output nativo), así
+ * Chrome restringe la generación a esta forma (structured output nativo), así
  * que la salida es JSON parseable en vez de texto con markdown alrededor. Ojo
  * con el matiz: la especificación NO promete cumplimiento garantizado — si el
  * navegador no logra producir una respuesta conforme, `prompt()` lanza un
@@ -57,7 +57,7 @@ export const UI_COMPONENTS: readonly UiComponent[] = [
  * Ref.: https://developer.chrome.com/docs/ai/structured-output-for-prompt-api
  *       https://github.com/webmachinelearning/prompt-api (comportamiento de error)
  *
- * 🧩 COMPOSICIÓN: la salida es una LISTA de secciones. Una consulta simple
+ * COMPOSICIÓN: la salida es una LISTA de secciones. Una consulta simple
  * devuelve 1 sección (comportamiento clásico); una consulta de panorama
  * ("resumen de mi mes") devuelve varias, que la app apila para construir una
  * interfaz completa. `maxItems` acota el panel para que la demo sea estable.

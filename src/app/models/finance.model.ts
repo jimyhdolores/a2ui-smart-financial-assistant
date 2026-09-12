@@ -122,7 +122,7 @@ export const ACCOUNT_ICON: Record<AccountKind, string> = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  🐜 Gastos hormiga
+//  Gastos hormiga
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Estados posibles del veredicto de gastos hormiga. */

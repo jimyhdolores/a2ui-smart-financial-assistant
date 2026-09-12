@@ -58,7 +58,7 @@
                 <p class="narrative">{{ m.text }}<span class="cursor" [class.on]="m.streaming"></span></p>
               }
 
-              <!-- 🎨 Interfaz generada por el LLM: 1..N componentes apilados -->
+              <!-- Interfaz generada por el LLM: 1..N componentes apilados -->
               @if (m.blocks?.length) {
                 <div class="generated">
                   @for (b of m.blocks; track $index) {

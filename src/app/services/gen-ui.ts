@@ -71,7 +71,7 @@ export class GenUiService {
   /** true mientras disparamos y esperamos la descarga del modelo. */
   readonly isDownloading = signal(false);
 
-  // ─── 🔍 TELEMETRÍA (prueba en vivo de que la IA es REAL) ────────────────────
+  // ─── TELEMETRÍA (prueba en vivo de que la IA es REAL) ───────────────────────
   /** Duración de la última inferencia local, en ms. Un `if/else` sería ~0 ms. */
   readonly lastDurationMs = signal<number | null>(null);
   /** Texto CRUDO devuelto por el modelo en la última inferencia (antes del parseo). */
@@ -92,7 +92,7 @@ export class GenUiService {
   readonly statusLabel = computed(() => {
     switch (this.status()) {
       case 'available':
-        return 'Modelo local listo (Gemini Nano) ✓';
+        return 'Modelo local listo (Gemini Nano)';
       case 'downloadable':
         return 'El modelo se puede descargar…';
       case 'downloading':
@@ -131,7 +131,7 @@ export class GenUiService {
     );
 
   /**
-   * ⬇️ Dispara la descarga de Gemini Nano (requiere gesto del usuario: se llama
+   * Dispara la descarga de Gemini Nano (requiere gesto del usuario: se llama
    * desde un botón). El propio `create()` baja el modelo y deja una sesión lista.
    */
   async downloadModel(): Promise<void> {
@@ -150,7 +150,7 @@ export class GenUiService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  //  1️⃣ ENRUTADO — qué componentes + parámetros (salida estructurada)
+  //  1. ENRUTADO — qué componentes + parámetros (salida estructurada)
   //      Niveles Intermedio y Avanzado: LOS DOS llaman a este mismo método.
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -164,10 +164,10 @@ export class GenUiService {
     const input = `${context}\n\nPregunta del usuario: "${query}"`;
 
     console.groupCollapsed(
-      '%c🧭 Gemini Nano — Enrutado de UI (Prompt API)',
+      '%cGemini Nano — Enrutado de UI (Prompt API)',
       'color:#7c4dff;font-weight:bold',
     );
-    console.log('%c📤 Consulta:', 'font-weight:bold', query);
+    console.log('%cConsulta:', 'font-weight:bold', query);
 
     const start = performance.now();
     try {
@@ -189,24 +189,24 @@ export class GenUiService {
       this.lastRawOutput.set(raw);
       this.lastDurationMs.set(durationMs);
 
-      console.log('%c📥 Salida CRUDA:', 'font-weight:bold', raw);
+      console.log('%cSalida CRUDA:', 'font-weight:bold', raw);
       console.log(
-        `%c⏱️ Inferencia local: ${durationMs} ms (sin red, on-device)`,
+        `%cInferencia local: ${durationMs} ms (sin red, on-device)`,
         'color:#00897b;font-weight:bold',
       );
-      console.log('%c✅ Decisión de UI:', 'font-weight:bold', decision);
+      console.log('%cDecisión de UI:', 'font-weight:bold', decision);
       console.groupEnd();
 
       return { decision, raw, durationMs };
     } catch (err) {
-      console.error('%c❌ Error en el enrutado:', 'color:#d32f2f', err);
+      console.error('%cError en el enrutado:', 'color:#d32f2f', err);
       console.groupEnd();
       throw err;
     }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  //  1️⃣·B  ENRUTADOR BÁSICO — versión mínima del enrutador (3 componentes toy)
+  //  1.B  ENRUTADOR BÁSICO — versión mínima del enrutador (3 componentes toy)
   //          Nivel Básico únicamente.
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -219,12 +219,12 @@ export class GenUiService {
     this.requireApi();
     const input = `${context}\n\nPregunta del usuario: "${query}"`;
     console.groupCollapsed(
-      '%c🧭 Gemini Nano — Enrutado BÁSICO (Prompt API)',
+      '%cGemini Nano — Enrutado BÁSICO (Prompt API)',
       'color:#7c4dff;font-weight:bold',
     );
-    console.log('%c🔍 Contexto:', 'font-weight:bold', context);
+    console.log('%cContexto:', 'font-weight:bold', context);
 
-    console.log('%c📤 Consulta:', 'font-weight:bold', query);
+    console.log('%cConsulta:', 'font-weight:bold', query);
 
     const start = performance.now();
     try {
@@ -246,24 +246,24 @@ export class GenUiService {
       this.lastRawOutput.set(raw);
       this.lastDurationMs.set(durationMs);
 
-      console.log('%c📥 Salida CRUDA:', 'font-weight:bold', raw);
+      console.log('%cSalida CRUDA:', 'font-weight:bold', raw);
       console.log(
-        `%c⏱️ Inferencia local: ${durationMs} ms (sin red, on-device)`,
+        `%cInferencia local: ${durationMs} ms (sin red, on-device)`,
         'color:#00897b;font-weight:bold',
       );
-      console.log('%c✅ Decisión básica:', 'font-weight:bold', decision);
+      console.log('%cDecisión básica:', 'font-weight:bold', decision);
       console.groupEnd();
 
       return { decision, raw, durationMs };
     } catch (err) {
-      console.error('%c❌ Error en el enrutado básico:', 'color:#d32f2f', err);
+      console.error('%cError en el enrutado básico:', 'color:#d32f2f', err);
       console.groupEnd();
       throw err;
     }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  //  2️⃣ NARRATIVA — respuesta en lenguaje natural con STREAMING token a token
+  //  2. NARRATIVA — respuesta en lenguaje natural con STREAMING token a token
   // ─────────────────────────────────────────────────────────────────────────
 
   /**
@@ -303,7 +303,7 @@ export class GenUiService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  //  🛡️ Utilidades de parseo defensivo
+  //  Utilidades de parseo defensivo
   // ─────────────────────────────────────────────────────────────────────────
 
   private requireApi(): void {

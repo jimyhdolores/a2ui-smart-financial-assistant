@@ -231,7 +231,15 @@
     gap: 0.25rem;
 
     .ant-tag {
-      font-size: 0.8rem;
+      flex: 0 0 auto;
+      padding: 0.05rem 0.4rem;
+      border-radius: 999px;
+      background: var(--mat-sys-secondary-container);
+      color: var(--mat-sys-on-secondary-container);
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
   }
 

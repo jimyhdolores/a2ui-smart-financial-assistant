@@ -112,7 +112,7 @@ export class BasicoPage {
   }
 
   /**
-   * 🧠 Flujo de un turno básico: enruta (componente + params), calcula el
+   * Flujo de un turno básico: enruta (componente + params), calcula el
    * `data` con TypeScript y, solo para PlainAnswer, stream-ea el texto.
    */
   private async send(rawQuery: string): Promise<void> {

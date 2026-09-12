@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { readStr } from '../../shared/data-access';
 
 /**
- * 💬 PlainAnswer — el componente toy más simple: una respuesta en texto.
+ * PlainAnswer — el componente toy más simple: una respuesta en texto.
  *
  * Nivel Básico. No calcula nada: solo muestra el texto que Gemini Nano generó
  * (con streaming). Sirve para preguntas conceptuales ("¿qué es un gasto

@@ -19,7 +19,7 @@ interface MovementRow {
 }
 
 /**
- * 📋 AppMovementsTable — movimientos filtrados en tabla.
+ * AppMovementsTable — movimientos filtrados en tabla.
  *
  * El LLM interpreta la consulta ("solo mis Yape", "mi mayor compra",
  * "movimientos en cafeterías") y produce `params` de filtro; TypeScript filtra

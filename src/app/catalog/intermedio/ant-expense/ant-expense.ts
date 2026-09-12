@@ -9,9 +9,9 @@ import { barChart, ChartConfig } from '../../shared/chart-theme';
 import { readArr, readBool, readNum, readStr } from '../../shared/data-access';
 
 /**
- * 🐜 AppAntExpense — HERO de gastos hormiga.
+ * AppAntExpense — HERO de gastos hormiga.
  *
- * Cambia por completo de aspecto según el veredicto (🟢 good / 🟡 warning / 🔴 risk):
+ * Cambia por completo de aspecto según el veredicto (good / warning / risk):
  * borde, avatar, tinte de fondo e icono. Muestra el total hormiga, la comparación
  * con el mes anterior, el rango de fecha de agotamiento del saldo y un mini-gráfico
  * por categoría. El slider "¿y si…?" emite el % de recorte hacia el contenedor,

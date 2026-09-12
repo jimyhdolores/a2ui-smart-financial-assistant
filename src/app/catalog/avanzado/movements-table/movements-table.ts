@@ -28,7 +28,7 @@ interface QuickFilter {
 }
 
 /**
- * 📋 AppMovementsTable — movimientos filtrados en tabla.
+ * AppMovementsTable — movimientos filtrados en tabla.
  *
  * El LLM interpreta la consulta inicial ("solo mis Yape", "mi mayor compra")
  * y produce `params` de filtro; TypeScript filtra la lista real. Además, los

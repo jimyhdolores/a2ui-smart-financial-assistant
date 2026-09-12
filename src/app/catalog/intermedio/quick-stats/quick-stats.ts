@@ -14,7 +14,7 @@ interface StatItem {
 }
 
 /**
- * 📌 AppQuickStats — tira compacta de KPIs (versión CASERA / Intermedio).
+ * AppQuickStats — tira compacta de KPIs (versión CASERA / Intermedio).
  *
  * Cabecera natural de un panel compuesto: en cuatro cifras da el pulso del mes
  * (Disponible · Gasto del mes · Gastos hormiga · Ahorro potencial). Los números

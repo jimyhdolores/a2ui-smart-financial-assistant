@@ -22,7 +22,7 @@ interface MovementRow {
 }
 
 /**
- * 📊 AppSpendingReport — reporte ejecutivo de gastos.
+ * AppSpendingReport — reporte ejecutivo de gastos.
  *
  * KPIs (total, nº de movimientos, comparación mensual), dona por categoría,
  * tendencia semanal y top de movimientos. Todos los números los calcula el

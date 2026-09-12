@@ -64,7 +64,7 @@ export class App {
   }
 
   /**
-   * ⬇️ Descarga el modelo Gemini Nano. Se llama desde un clic (user activation),
+   * Descarga el modelo Gemini Nano. Se llama desde un clic (user activation),
    * tal como exige la API de Chrome.
    */
   protected async downloadModel(): Promise<void> {

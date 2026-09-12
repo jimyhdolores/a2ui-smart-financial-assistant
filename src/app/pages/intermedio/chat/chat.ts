@@ -142,7 +142,7 @@ export class Chat {
   }
 
   /**
-   * 🧠 Flujo completo de un turno: enruta (componente + params), calcula el
+   * Flujo completo de un turno: enruta (componente + params), calcula el
    * `data` con TypeScript, renderiza el componente y stream-ea la narrativa.
    */
   private async send(rawQuery: string): Promise<void> {

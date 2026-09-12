@@ -35,7 +35,7 @@ export class A2uiActionService {
     const context = (action.context ?? {}) as Record<string, unknown>;
 
     switch (action.name) {
-      // 🐜 Slider de gastos hormiga: recalcula SOLO la proyección de agotamiento
+      // Slider de gastos hormiga: recalcula SOLO la proyección de agotamiento
       //    (deja intacto el veredicto status/headline/message y el resto).
       case A2UI_ACTIONS.simulateReduction: {
         const pct = this.toNum(context['pct']);
@@ -49,7 +49,7 @@ export class A2uiActionService {
         break;
       }
 
-      // 📋 Chips de filtro de la tabla: re-filtra y reemplaza todo el /data.
+      // Chips de filtro de la tabla: re-filtra y reemplaza todo el /data.
       case A2UI_ACTIONS.filterMovements: {
         const data = this.analytics.buildData('AppMovementsTable', context, account);
         this.renderer.processMessages([this.builder.updateData(surfaceId, data)]);

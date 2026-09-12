@@ -2,7 +2,7 @@
  * ╔═══════════════════════════════════════════════════════════════════════╗
  * ║  PROTOCOLO A2UI v0.9 — constantes y descriptores del dominio "finance" ║
  * ║                                                                       ║
- * ║  ⚠️  Este SÍ es el protocolo A2UI, y solo lo usa el nivel Avanzado.     ║
+ * ║  Este SÍ es el protocolo A2UI, y solo lo usa el nivel Avanzado.       ║
  * ║  A diferencia de `ui-router.model.ts` (el contrato casero del          ║
  * ║  ENRUTADOR de Nano: qué componentes + params, común a Intermedio y     ║
  * ║  Avanzado), este archivo describe el PROTOCOLO real                     ║
