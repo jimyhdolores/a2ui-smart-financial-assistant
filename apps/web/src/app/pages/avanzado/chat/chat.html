@@ -1,0 +1,247 @@
+<div class="chat">
+  <!-- ── ¿Dónde vive el agente? ─────────────────────────────────────────────── -->
+  <div class="mode-bar">
+    <span class="mode-label">¿Dónde vive el agente?</span>
+    <mat-button-toggle-group
+      class="mode-toggle"
+      [value]="agentMode.mode()"
+      (change)="setMode($event.value)"
+      [disabled]="busy()"
+      hideSingleSelectionIndicator
+      aria-label="Dónde vive el agente"
+    >
+      <mat-button-toggle value="local">
+        <mat-icon>devices</mat-icon>
+        En tu navegador · Gemini Nano
+      </mat-button-toggle>
+      <mat-button-toggle value="server">
+        <mat-icon>dns</mat-icon>
+        En el servidor · {{ remote.health()?.model ?? 'Gemini' }}
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+
+    @if (agentMode.isServer()) {
+      @if (remote.healthError(); as e) {
+        <span class="mode-status warn"><mat-icon>cloud_off</mat-icon>{{ e }}</span>
+      } @else if (remote.health() && !remote.health()!.llmConfigured) {
+        <span class="mode-status warn">
+          <mat-icon>key_off</mat-icon>El servidor no tiene GEMINI_API_KEY (apps/agent/.env)
+        </span>
+      } @else if (remote.health(); as h) {
+        <span class="mode-status ok">
+          <mat-icon>lock</mat-icon>A2UI {{ h.a2uiVersion }} · {{ h.mimeType }} · la API key no sale del servidor
+        </span>
+      }
+    }
+  </div>
+
+  <!-- ── Historial de mensajes ─────────────────────────────────────────────── -->
+  <div class="messages" #scroller>
+    @if (messages().length === 0) {
+      <!-- Estado inicial: bienvenida didáctica + sugerencias -->
+      <div class="welcome">
+        @if (agentMode.isServer()) {
+          <div class="welcome-icon"><mat-icon>dns</mat-icon></div>
+          <h2>Nivel 3 · El agente se mudó al servidor</h2>
+          <p>
+            Ahora responde <strong>un modelo grande en un servidor</strong>. Ya no solo elige
+            tarjetas: <strong>diseña la pantalla</strong> con las mismas piezas de este catálogo
+            (títulos, explicaciones, botones) y Python pone todas las cifras.
+          </p>
+          <p class="welcome-note">
+            Lo que cruza la red son <strong>mensajes A2UI</strong>, nunca código. Este navegador solo
+            pinta las piezas que tiene en su lista blanca, y lo que toques (filtros, deslizador,
+            botones) viaja de vuelta al agente.
+          </p>
+        } @else {
+          <div class="welcome-icon"><mat-icon>hub</mat-icon></div>
+          <h2>Nivel 3 · La misma decisión, servida por el protocolo A2UI</h2>
+          <p>
+            <strong>Gemini Nano</strong> decide exactamente lo mismo que en el nivel 2 — los mismos
+            siete componentes, la misma capacidad de combinarlos. Lo único que cambia es
+            <strong>cómo llega esa decisión a la pantalla</strong>: en lugar de pintar el componente a
+            mano, la app la traduce al <strong>protocolo A2UI</strong>, un estándar abierto.
+          </p>
+          <p class="welcome-note">
+            La ventaja: la conversación va en <em>los dos sentidos</em>. Mueve el slider de una
+            tarjeta y verás que la interfaz le responde al agente, y este recalcula.
+          </p>
+        }
+        <div class="suggest-grid">
+          @for (s of suggestions; track s.query) {
+            <button
+              matButton="outlined"
+              class="suggest-card"
+              [disabled]="!canAsk()"
+              (click)="sendSuggestion(s)"
+            >
+              <mat-icon>{{ s.icon }}</mat-icon>
+              <span>{{ s.label }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    @for (m of messages(); track $index) {
+      @if (m.role === 'user') {
+        <div class="msg user">
+          <div class="bubble">{{ m.text }}</div>
+        </div>
+      } @else {
+        <div class="msg assistant">
+          <div class="avatar" [class.server]="m.origin === 'server'">
+            <mat-icon>{{ m.origin === 'server' ? 'dns' : 'smart_toy' }}</mat-icon>
+          </div>
+          <div class="assistant-body">
+            @if (m.loading) {
+              <!-- Skeleton mientras el LLM decide / diseña -->
+              <div class="skeleton">
+                <span class="sk-line w70"></span>
+                <span class="sk-line w90"></span>
+                <span class="sk-line w40"></span>
+              </div>
+              @if (m.origin === 'server') {
+                <span class="thinking">
+                  {{ m.thought ? 'Razonando: ' + m.thought : 'Gemini está pensando en el servidor…' }}
+                </span>
+              } @else {
+                <span class="thinking">Gemini Nano está pensando…</span>
+              }
+            } @else if (m.error) {
+              <div class="msg-error">
+                <mat-icon>error</mat-icon>
+                <div>
+                  <strong>No pude responder</strong>
+                  <p>{{ m.error }}</p>
+                </div>
+              </div>
+            } @else {
+              <!-- Narrativa (streaming token a token) -->
+              @if (m.text) {
+                <p class="narrative">{{ m.text }}<span class="cursor" [class.on]="m.streaming"></span></p>
+              }
+
+              <!-- Superficies A2UI del turno (renderer oficial; el mismo en ambos modos) -->
+              @if (m.surfaces?.length) {
+                <div class="generated" [class.server]="m.origin === 'server'">
+                  @for (sid of m.surfaces; track sid) {
+                    <a2ui-v09-surface [surfaceId]="sid" />
+                  }
+                </div>
+              }
+
+              <!-- Telemetría + protocolo A2UI -->
+              <div class="msg-foot">
+                @if (m.durationMs != null) {
+                  @if (m.origin === 'server') {
+                    @if (m.servedModel) {
+                      <span
+                        class="ms-badge server"
+                        title="Modelo confirmado por la propia respuesta de Google (evento interaction.completed), no por la configuración del servidor"
+                      >
+                        <mat-icon>verified</mat-icon>
+                        {{ m.durationMs / 1000 | number: '1.1-1' }} s · {{ m.servedModel }} · confirmado por Google
+                      </span>
+                      @if (m.usage?.total) {
+                        <span class="ms-badge server" title="Tokens que reporta Google para esta respuesta">
+                          <mat-icon>psychology</mat-icon>
+                          {{ m.usage!.total | number }} tokens
+                          @if (m.usage!.thought) {
+                            · {{ m.usage!.thought | number }} de razonamiento
+                          }
+                        </span>
+                      }
+                    } @else {
+                      <span class="ms-badge server" title="Respuesta del agente en el servidor">
+                        <mat-icon>dns</mat-icon>
+                        {{ m.durationMs / 1000 | number: '1.1-1' }} s · servidor · {{ m.model }}
+                      </span>
+                    }
+                  } @else {
+                    <span class="ms-badge" title="Sin red — 100% en tu dispositivo">
+                      <mat-icon>bolt</mat-icon>
+                      {{ m.durationMs }} ms · on-device
+                    </span>
+                  }
+                }
+                @if (m.note) {
+                  <span class="note"><mat-icon>info</mat-icon>{{ m.note }}</span>
+                }
+                @if (m.a2uiStream) {
+                  <details class="decision-json">
+                    <summary>Ver protocolo A2UI</summary>
+                    @if (m.origin === 'server') {
+                      @if (m.raw) {
+                        <p class="json-label">
+                          Lo que escribió Gemini (solo la estructura, sin una cifra):
+                        </p>
+                        <pre>{{ m.raw }}</pre>
+                      }
+                      <p class="json-label">
+                        Lo que llegó por la red — un evento SSE <code>a2ui</code> por mensaje, cada uno
+                        etiquetado <code>"mimeType": "application/a2ui+json"</code> (como en A2A), con los
+                        datos que puso Python:
+                      </p>
+                      <pre>{{ m.a2uiStream }}</pre>
+                    } @else {
+                      @if (m.raw) {
+                        <p class="json-label">Salida de Gemini Nano (enrutado, on-device):</p>
+                        <pre>{{ m.raw }}</pre>
+                      }
+                      <p class="json-label">Stream A2UI v1.0 (createSurface · updateComponents · updateDataModel):</p>
+                      <pre>{{ m.a2uiStream }}</pre>
+                    }
+                  </details>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- ── Compositor ────────────────────────────────────────────────────────── -->
+  <div class="composer">
+    @if (messages().length > 0) {
+      <div class="chip-strip">
+        @for (s of suggestions; track s.query) {
+          <button class="chip" [disabled]="busy() || !canAsk()" (click)="sendSuggestion(s)">
+            <mat-icon>{{ s.icon }}</mat-icon>{{ s.label }}
+          </button>
+        }
+      </div>
+    }
+
+    <form class="composer-row" (ngSubmit)="submit()">
+      <mat-form-field appearance="outline" class="composer-field" subscriptSizing="dynamic">
+        <mat-label>Escribe tu pregunta…</mat-label>
+        <input
+          matInput
+          [(ngModel)]="input"
+          name="chatInput"
+          [disabled]="busy() || !canAsk()"
+          autocomplete="off"
+        />
+        <mat-icon matSuffix>chat</mat-icon>
+      </mat-form-field>
+      <button
+        matButton="filled"
+        type="submit"
+        class="send-btn"
+        [disabled]="busy() || !input().trim() || !canAsk()"
+      >
+        <mat-icon>{{ busy() ? 'hourglass_top' : 'send' }}</mat-icon>
+      </button>
+    </form>
+
+    @if (!canAsk()) {
+      <p class="unsupported">
+        <mat-icon>info</mat-icon>
+        Este navegador no expone la Prompt API de Chrome. Usa Chrome de escritorio 148+ (o 138+
+        con los flags de IA integrada activados), o cambia a «En el servidor».
+      </p>
+    }
+  </div>
+</div>

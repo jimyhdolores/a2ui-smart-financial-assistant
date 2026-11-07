@@ -1,15 +1,30 @@
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# Monorepo: las reglas sin "/" inicial aplican en cualquier carpeta (apps/web, apps/agent, …).
 
 # Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
+dist/
+tmp/
+out-tsc/
+bazel-out/
 
 # Node
-/node_modules
+node_modules/
 npm-debug.log
 yarn-error.log
+
+# Python (apps/agent)
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# Secretos: la API key de Gemini vive en apps/agent/.env (nunca se versiona)
+.env
+.env.*
+!.env.example
 
 # IDEs and editors
 .idea/
@@ -30,13 +45,13 @@ yarn-error.log
 .history/*
 
 # Miscellaneous
-/.angular/cache
+.angular/
 .sass-cache/
-/connect.lock
-/coverage
-/libpeerconnection.log
+connect.lock
+coverage/
+libpeerconnection.log
 testem.log
-/typings
+typings/
 __screenshots__/
 
 # System files

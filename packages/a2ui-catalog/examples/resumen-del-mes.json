@@ -1,0 +1,57 @@
+[
+  {
+    "version": "1.0",
+    "createSurface": {
+      "surfaceId": "main",
+      "catalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+    }
+  },
+  {
+    "version": "1.0",
+    "updateComponents": {
+      "surfaceId": "main",
+      "components": [
+        { "id": "root", "component": "Column", "children": ["title", "kpis", "intro", "report", "tips", "next_row"] },
+        { "id": "title", "component": "Text", "text": "## Tu mes en una mirada" },
+        {
+          "id": "kpis",
+          "component": "AppQuickStats",
+          "catalogId": "https://a2ui-smart-financial-assistant/catalogs/finance/v1_0"
+        },
+        {
+          "id": "intro",
+          "component": "Text",
+          "text": "Lo que más pesa este mes es lo que gastas en el día a día: abajo ves en qué se va tu dinero y qué podrías recortar."
+        },
+        {
+          "id": "report",
+          "component": "AppSpendingReport",
+          "catalogId": "https://a2ui-smart-financial-assistant/catalogs/finance/v1_0",
+          "title": "¿En qué se va tu dinero?"
+        },
+        {
+          "id": "tips",
+          "component": "AppRecommendations",
+          "catalogId": "https://a2ui-smart-financial-assistant/catalogs/finance/v1_0"
+        },
+        { "id": "next_row", "component": "Row", "children": ["ask_savings", "ask_ants"] },
+        {
+          "id": "ask_savings",
+          "component": "Button",
+          "child": "ask_savings_label",
+          "variant": "borderless",
+          "action": { "event": { "name": "followUp", "context": { "question": "¿Cómo puedo ahorrar más dinero cada mes?" } } }
+        },
+        { "id": "ask_savings_label", "component": "Text", "text": "¿Cómo ahorro más?" },
+        {
+          "id": "ask_ants",
+          "component": "Button",
+          "child": "ask_ants_label",
+          "variant": "borderless",
+          "action": { "event": { "name": "followUp", "context": { "question": "¿Qué gastos hormiga tengo y cómo van?" } } }
+        },
+        { "id": "ask_ants_label", "component": "Text", "text": "Ver mis gastos hormiga" }
+      ]
+    }
+  }
+]

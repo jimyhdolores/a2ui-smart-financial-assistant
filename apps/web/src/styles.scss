@@ -1,0 +1,61 @@
+// Include theming for Angular Material with `mat.theme()`.
+// This Sass mixin will define CSS variables that are used for styling Angular Material
+// components according to the Material 3 design spec.
+// Learn more about theming and how to use it for your application's
+// custom components at https://material.angular.dev/guide/theming
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+body {
+  // Default the application to a light color theme. This can be changed to
+  // `dark` to enable the dark color theme, or to `light dark` to defer to the
+  // user's system settings.
+  color-scheme: light;
+
+  // Set a default background, font and text colors for the application using
+  // Angular Material's system-level CSS variables. Learn more about these
+  // variables at https://material.angular.dev/guide/system-variables
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+
+  // Reset the user agent margin.
+  margin: 0;
+  height: 100%;
+}
+/* You can add global styles to this file, and also import other style files */
+
+// Pantallas que compone el agente del servidor (chat de Avanzado, modo servidor):
+// las piezas del catálogo básico de A2UI (Text, Row, Card, Button…) son web
+// components con su propio estilo; estas variables las alinean con Material 3.
+.generated.server {
+  --a2ui-color-primary: var(--mat-sys-primary);
+  --a2ui-color-on-primary: var(--mat-sys-on-primary);
+  --a2ui-color-surface: var(--mat-sys-surface);
+  --a2ui-color-on-surface: var(--mat-sys-on-surface);
+  --a2ui-color-background: var(--mat-sys-surface);
+  --a2ui-color-on-background: var(--mat-sys-on-surface);
+  --a2ui-color-border: var(--mat-sys-outline-variant);
+  --a2ui-text-color-text: var(--mat-sys-on-surface);
+  --a2ui-text-caption-color: var(--mat-sys-on-surface-variant);
+  --a2ui-font-family-title: inherit;
+  --a2ui-column-gap: 1rem;
+  --a2ui-row-gap: 0.75rem;
+  --a2ui-card-border-radius: 16px;
+  --a2ui-card-border: 1px solid var(--mat-sys-outline-variant);
+  --a2ui-card-box-shadow: none;
+  --a2ui-button-border-radius: 999px;
+}

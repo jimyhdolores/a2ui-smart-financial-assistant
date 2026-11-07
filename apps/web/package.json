@@ -1,0 +1,39 @@
+{
+  "name": "web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test"
+  },
+  "dependencies": {
+    "@fintech-nano/a2ui-catalog": "workspace:*",
+    "@a2ui/angular": "^0.14.0",
+    "@a2ui/markdown-it": "^0.2.2",
+    "@a2ui/web_core": "^0.15.0",
+    "@angular/animations": "22.0.8",
+    "@angular/cdk": "^22.0.6",
+    "@angular/common": "^22.0.0",
+    "@angular/compiler": "^22.0.0",
+    "@angular/core": "^22.0.0",
+    "@angular/forms": "^22.0.0",
+    "@angular/material": "^22.0.6",
+    "@angular/platform-browser": "^22.0.0",
+    "@angular/router": "^22.0.0",
+    "apexcharts": "^6.6.1",
+    "ng-apexcharts": "^2.4.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.0.8",
+    "@angular/cli": "^22.0.8",
+    "@angular/compiler-cli": "^22.0.0",
+    "@types/dom-chromium-ai": "0.0.17",
+    "prettier": "^3.8.1",
+    "typescript": "~6.0.2"
+  }
+}

@@ -1,0 +1,26 @@
+[project]
+name = "finance-agent"
+version = "0.1.0"
+description = "Agente A2UI v1.0 del asistente financiero: Gemini compone la pantalla y Python pone los datos."
+authors = [{ name = "jimy" }]
+requires-python = ">=3.13"
+dependencies = [
+    "a2ui-agent-sdk>=0.10,<0.11",
+    "fastapi[standard]>=0.162",
+    "google-genai>=3.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.1,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.fastapi]
+entrypoint = "finance_agent.main:app"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,14 @@
+{
+  "name": "@fintech-nano/a2ui-catalog",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Contrato A2UI v1.0 compartido entre el renderer (apps/web) y el agente (apps/agent): el catálogo de finanzas y los ejemplos para el modelo.",
+  "exports": {
+    "./finance-catalog.v1.json": "./finance-catalog.v1.json",
+    "./examples/*": "./examples/*"
+  },
+  "files": [
+    "finance-catalog.v1.json",
+    "examples"
+  ]
+}
