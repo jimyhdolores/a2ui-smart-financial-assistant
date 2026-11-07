@@ -130,13 +130,19 @@ export function barChart(categories: string[], values: number[]): ChartConfig {
   };
 }
 
-/** Progreso radial (una sola métrica en %). */
+/**
+ * Progreso radial (una sola métrica en %).
+ *
+ * Lleva ancho fijo (el de su columna, 180px): dentro de un web component de
+ * A2UI v1.0 el gráfico se crea antes de que el navegador mida el contenedor y
+ * ApexCharts caería al tamaño por defecto de un SVG (300px), desbordándose.
+ */
 export function radialChart(pct: number, label: string, color = '#3f6bd8'): ChartConfig {
   return {
     series: [Math.max(0, Math.min(100, Math.round(pct)))],
     labels: [label],
     colors: [color],
-    chart: { type: 'radialBar', height: 240, fontFamily: FONT },
+    chart: { type: 'radialBar', height: 240, width: 180, fontFamily: FONT },
     plotOptions: {
       radialBar: {
         hollow: { size: '62%' },
@@ -151,13 +157,16 @@ export function radialChart(pct: number, label: string, color = '#3f6bd8'): Char
   };
 }
 
-/** Gauge semicircular (capacidad de crédito / uso de la línea). */
+/**
+ * Gauge semicircular (capacidad de crédito / uso de la línea).
+ * Ancho fijo (200px, el de su columna) por la misma razón que `radialChart`.
+ */
 export function gaugeChart(pct: number, label: string, color = '#3f6bd8'): ChartConfig {
   return {
     series: [Math.max(0, Math.min(100, Math.round(pct)))],
     labels: [label],
     colors: [color],
-    chart: { type: 'radialBar', height: 260, fontFamily: FONT, sparkline: { enabled: true } },
+    chart: { type: 'radialBar', height: 260, width: 200, fontFamily: FONT, sparkline: { enabled: true } },
     plotOptions: {
       radialBar: {
         startAngle: -110,

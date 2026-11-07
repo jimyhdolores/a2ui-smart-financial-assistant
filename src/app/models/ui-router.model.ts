@@ -13,7 +13,7 @@
  * ║  Intermedio y el Avanzado: en ambos la decisión del modelo es la       ║
  * ║  misma. Lo que cambia es cómo se materializa esa decisión:            ║
  * ║    · Intermedio → Angular monta el componente directamente.           ║
- * ║    · Avanzado   → se traduce al protocolo A2UI v0.9 estándar,         ║
+ * ║    · Avanzado   → se traduce al protocolo A2UI v1.0 estándar,         ║
  * ║                   descrito aparte en `a2ui-protocol.ts`.              ║
  * ║                                                                       ║
  * ║  La versión reducida de este mismo contrato, para el nivel Básico,    ║

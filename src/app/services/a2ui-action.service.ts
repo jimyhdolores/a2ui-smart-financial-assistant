@@ -1,6 +1,6 @@
 import { Injectable, Injector, inject } from '@angular/core';
-import { A2uiRendererService } from '@a2ui/angular/v0_9';
-import type { A2uiClientAction } from '@a2ui/web_core/v0_9';
+import { A2uiRendererService } from '@a2ui/angular';
+import type { ActionPayload } from '@a2ui/web_core';
 
 import { A2UI_ACTIONS } from '../models/a2ui-protocol';
 import { A2uiMessageBuilder } from './a2ui-message-builder';
@@ -28,8 +28,8 @@ export class A2uiActionService {
   private readonly finance = inject(FinanceDataService);
   private readonly builder = inject(A2uiMessageBuilder);
 
-  /** Handler global registrado en `A2UI_RENDERER_CONFIG.actionHandler`. */
-  handle(action: A2uiClientAction): void {
+  /** Handler global registrado como `actionHandler` en `provideA2UI`. */
+  handle(action: ActionPayload): void {
     const surfaceId = action.surfaceId;
     const account = this.finance.selectedAccount();
     const context = (action.context ?? {}) as Record<string, unknown>;

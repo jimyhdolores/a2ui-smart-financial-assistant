@@ -38,7 +38,7 @@ Todo ocurre **100% en local, dentro del navegador**, usando el modelo **Gemini N
 
 Es **la** fuente de confusión de este proyecto, así que va por delante:
 
-| | El **patrón** Agent-to-UI | El **protocolo** A2UI v0.9 |
+| | El **patrón** Agent-to-UI | El **protocolo** A2UI v1.0 |
 | --- | --- | --- |
 | Qué es | La idea general: *el modelo elige la UI, no el desarrollador* | Un estándar concreto de [a2ui.org](https://a2ui.org/), con _surfaces_, _data-model_ y _actions_ |
 | Quién lo define | Nadie — es un patrón de diseño | El proyecto A2UI (Google + comunidad) |
@@ -103,7 +103,7 @@ Cada nivel es una **ruta** propia (`/basico`, `/intermedio`, `/avanzado`) y se c
 | -------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | **Básico**     | `/basico`     | El pipeline de Generative UI en su forma más desnuda: pregunta → schema → componente. Sin gráficos, sin protocolo. **1 intención → 1 componente.** | `routeBasic()` elige **1** de **3 componentes toy** → `NgComponentOutlet` con un registro mínimo de 3 entradas         |
 | **Intermedio** | `/intermedio` | El catálogo rico completo con un **contrato casero**: el mismo patrón, con 7 componentes de verdad y gráficos, y **composición** de varias piezas. | `route()` elige **1..N** de **7 componentes** → `@for` + `NgComponentOutlet` + `INTERMEDIO_REGISTRY` (string → clase)  |
-| **Avanzado**   | `/avanzado`   | Los **mismos 7 componentes** pero servidos por el **protocolo A2UI v0.9 real** (surfaces + data-model + actions bidireccionales).                  | `route()` (idéntico a Intermedio) → **una superficie A2UI por sección** → `<a2ui-v09-surface>` vía el renderer oficial |
+| **Avanzado**   | `/avanzado`   | Los **mismos 7 componentes** pero servidos por el **protocolo A2UI v1.0 real** (surfaces + data-model + actions bidireccionales).                  | `route()` (idéntico a Intermedio) → **una superficie A2UI por sección** → `<a2ui-v09-surface>` vía el renderer oficial |
 
 > **La moraleja Intermedio → Avanzado:** _la decisión del modelo es exactamente la misma_ (ambos usan `route()` y el contrato de [`ui-router.model.ts`](src/app/models/ui-router.model.ts)). Lo único que cambia es el **mecanismo de render**: un `NgComponentOutlet` casero frente a un protocolo estándar con _round-trip_ agéntico. Primero enseñas la idea con lo mínimo, luego muestras cómo se ve "en serio".
 
@@ -121,7 +121,7 @@ En el proyecto conviven **tres** estructuras JSON, y confundirlas es fácil porq
 | --- | --- | --- | --- | --- |
 | 1 | **La decisión del modelo**<br>`{ sections: [ { componentToRender, params } ] }` | **No** — inventada para esta demo | Nadie: es una decisión de diseño | Nada; podría cambiarse mañana |
 | 2 | **Chrome cumpliendo esa decisión**<br>`responseConstraint` | Se _intenta_, sin garantía formal | Chrome, restringiendo la generación | `SyntaxError` — por eso el parseo es defensivo |
-| 3 | **Los mensajes A2UI**<br>`createSurface`, `updateComponents`… | **Sí, totalmente** | La especificación A2UI v0.9 | `A2uiStateError` / `A2uiValidationError` |
+| 3 | **Los mensajes A2UI**<br>`createSurface`, `updateComponents`… | **Sí, totalmente** | La especificación A2UI v1.0 | `A2uiStateError` / `A2uiValidationError` |
 
 **La diferencia de fondo:** a un LLM solo puedes _pedirle_ y luego validar — se equivoca, envuelve el JSON en markdown, inventa nombres. A tu propio código puedes _exigirle_, y si falla debe reventar ruidosamente, porque eso es un bug, no una alucinación.
 
@@ -144,7 +144,7 @@ Por eso [`GenUiService`](src/app/services/gen-ui.ts) lleva cinturón y tirantes:
 | **Narrativa en streaming** token a token (`promptStreaming`)                                                | [`GenUiService.answerStreaming()`](src/app/services/gen-ui.ts)                                                                                                                              |
 | **Matemática determinista del dinero** (nunca el LLM)                                                       | [`FinanceAnalyticsService`](src/app/services/finance-analytics.ts)                                                                                                                          |
 | **Generative UI casera** — un string del modelo se convierte en un componente vivo                          | `[ngComponentOutlet]` en [`chat.html`](src/app/pages/intermedio/chat/chat.html) + [`basico-page.html`](src/app/pages/basico/basico-page.html)                                               |
-| **Protocolo A2UI v0.9 real** — surfaces, data-model y actions con el renderer oficial                       | [`<a2ui-v09-surface>`](src/app/pages/avanzado/chat/chat.html) + [`finance-catalog.ts`](src/app/catalog/avanzado/finance-catalog.ts) + [`a2ui-protocol.ts`](src/app/models/a2ui-protocol.ts) |
+| **Protocolo A2UI v1.0 real** — surfaces, data-model y actions con el renderer oficial                       | [`<a2ui-v09-surface>`](src/app/pages/avanzado/chat/chat.html) + [`finance-catalog.ts`](src/app/catalog/avanzado/finance-catalog.ts) + [`a2ui-protocol.ts`](src/app/models/a2ui-protocol.ts) |
 | **Round-trip agéntico** — el componente emite un `action.event` y TypeScript devuelve un `updateDataModel`  | [`FinanceComponent.dispatch()`](src/app/catalog/avanzado/finance-component.base.ts) + [`A2uiActionService`](src/app/services/a2ui-action.service.ts)                                        |
 | **Catálogos de componentes ("bloques de Lego"), uno por nivel**                                             | [`src/app/catalog/`](src/app/catalog/) — `BASICO_REGISTRY` · `INTERMEDIO_REGISTRY` · `buildFinanceCatalog()`                                                                                |
 | **Contrato tipado + salida estructurada**                                                                   | [`ui-router.model.ts`](src/app/models/ui-router.model.ts) + [`basico.model.ts`](src/app/models/basico.model.ts) (`responseConstraint` / JSON Schema)                                        |
@@ -213,22 +213,22 @@ Son **cuatro** tipos de mensaje JSON, y un mensaje solo puede llevar uno:
 | `updateDataModel` | Los **datos** que rellenan esos punteros | ídem (`updateData` / `patch`) |
 | `deleteSurface` | Destruye un lienzo | — _no se usa: el chat conserva el historial_ |
 
-Un turno completo son estos tres objetos:
+Un turno completo son estos tres objetos (protocolo **v1.0**, la versión vigente de la especificación):
 
 ```jsonc
 [
-  { "version": "v0.9",
-    "createSurface": { "surfaceId": "finance-1-0", "catalogId": "https://…/finance/v0_9" } },
+  { "version": "1.0",
+    "createSurface": { "surfaceId": "finance-1-0", "catalogId": "https://…/finance/v1_0" } },
 
   // La ESTRUCTURA. Fíjate: aquí no viaja ni un número, solo punteros.
-  { "version": "v0.9",
+  { "version": "1.0",
     "updateComponents": { "surfaceId": "finance-1-0",
       "components": [ { "id": "root", "component": "AppQuickStats",
-                        "currency": { "path": "/data/currency" },
-                        "items":    { "path": "/data/items" } } ] } },
+                        "currency": { "@path": "/data/currency" },
+                        "items":    { "@path": "/data/items" } } ] } },
 
   // Los DATOS, calculados en TypeScript.
-  { "version": "v0.9",
+  { "version": "1.0",
     "updateDataModel": { "surfaceId": "finance-1-0", "path": "/data",
                          "value": { "currency": "$", "items": [ … ] } } }
 ]
@@ -236,19 +236,20 @@ Un turno completo son estos tres objetos:
 
 Esa separación estructura/datos es la tesis del proyecto hecha protocolo — *"el LLM decide la intención, TypeScript pone el dinero"* — y permite luego cambiar un solo valor con `patch()` sin reenviar la pantalla entera. Puedes verlo en vivo: en el nivel Avanzado, despliega **"Ver protocolo A2UI"** bajo cualquier respuesta.
 
+> **Qué cambió de v0.9 a v1.0** (lo que se ve en este ejemplo): la versión se escribe `"1.0"`; los punteros llevan arroba (`{"@path": …}`) para que nunca se confundan con un dato normal; y `updateDataModel` siempre trae `value` (mandar `null` borra el dato). v1.0 también permitiría mandar todo en un único `createSurface` con los componentes y los datos dentro: aquí lo dejamos en tres mensajes porque así se ve la separación.
+
 ### El catálogo es una lista blanca (aquí está la gracia)
 
-[`buildFinanceCatalog()`](src/app/catalog/avanzado/finance-catalog.ts) asocia cada nombre público con **una clase Angular tuya** y un contrato de props:
+El catálogo tiene dos mitades:
 
-```ts
-{ name: 'AppQuickStats', component: QuickStats, schema: … }
-```
+1. **El contrato**, en [`finance-catalog.v1.json`](src/app/catalog/avanzado/finance-catalog.v1.json): un documento de catálogo A2UI estándar que dice qué componentes existen y qué campos acepta cada uno (texto, número, sí/no o un valor libre; siempre como dato fijo o como puntero). Es justo lo que leería un agente que viviera en otro lado.
+2. **Las caras**, en [`buildFinanceCatalog()`](src/app/catalog/avanzado/finance-catalog.ts): `Catalog.fromJson()` lee el contrato y `createComponentImplementation()` le pone a cada nombre **una clase Angular tuya**.
 
-Ese catálogo **vive solo en el cliente y nunca viaja** — contiene clases, no es serializable. El emisor únicamente manda el string `"AppQuickStats"`. Si mandara `"AppLoQueSea"`, el renderer no lo encuentra y **no pinta nada** (lo verás como `Component type "…" not found in catalog` en consola).
+Las caras **viven solo en el cliente y nunca viajan** — son clases, no se pueden serializar. El emisor únicamente manda el string `"AppQuickStats"`. Si mandara `"AppLoQueSea"`, el renderer no lo encuentra y **no pinta nada**.
 
 Ahí está el modelo de seguridad completo: **lo que viaja son datos, nunca código ejecutable**, y el emisor puede _pedir_ pero no _ampliar_ la lista. Por eso podrías aceptar UI de un agente en el que no confías del todo: lo peor que puede hacer es pedir algo que no le diste.
 
-> En esta demo los schemas de props son `z.any()` a propósito ([ver el comentario del archivo](src/app/catalog/avanzado/finance-catalog.ts)) — didácticos y permisivos. Si el emisor fuera un servidor ajeno, ahí querrías tipos reales para que un valor malformado reventara en la validación en vez de llegar al componente.
+> Con v1.0 los campos dejaron de ser "cualquier cosa": el renderer solo resuelve los punteros de los campos que el contrato declara como dinámicos, y valida el resto. Un valor malformado revienta en la validación en vez de llegar al componente.
 
 ### Honestidad: en ESTA demo, A2UI casi no aporta
 
@@ -291,13 +292,13 @@ src/app/
 ├── app.ts / app.html / app.scss   # SHELL único: sidebar de cuentas + header (selector de nivel +
 │                                   # estado/descarga de Gemini Nano) + <router-outlet/>
 ├── app.routes.ts                   # 3 rutas lazy (loadComponent) + redirect '' → 'basico'
-├── app.config.ts                   # Providers raíz, incl. A2UI_RENDERER_CONFIG (nivel Avanzado)
+├── app.config.ts                   # Providers raíz, incl. provideA2UI (nivel Avanzado)
 │
 ├── models/
 │   ├── finance.model.ts            # Dominio: Account, Transaction, Category, PaymentMethod, AntVerdict + metadatos
 │   ├── basico.model.ts             # [Básico] Contrato del enrutador: BasicoComponent + BASICO_ROUTER_SCHEMA
 │   ├── ui-router.model.ts          # [Intermedio/Avanzado] Contrato del enrutador (casero): UiComponent + UI_ROUTER_SCHEMA
-│   └── a2ui-protocol.ts            # [Avanzado] Protocolo A2UI v0.9 REAL: catalog id, campos por componente, actions, surface ids
+│   └── a2ui-protocol.ts            # [Avanzado] Protocolo A2UI v1.0 REAL: catalog id, campos por componente, actions, surface ids
 │
 ├── services/
 │   ├── gen-ui.ts                   # GenUiService: detección/descarga + route() + routeBasic() + answerStreaming()
@@ -321,7 +322,8 @@ src/app/
 │   ├── avanzado/                   #    [Avanzado] los 7 vía protocolo A2UI (extends FinanceComponent)
 │   │   ├── quick-stats/  spending-report/  ant-expense/  movements-table/
 │   │   ├── recommendations/  savings-plan/ credit-advisor/
-│   │   ├── finance-catalog.ts      #       buildFinanceCatalog(): el AngularCatalog A2UI
+│   │   ├── finance-catalog.v1.json #       El CONTRATO: documento de catálogo A2UI v1.0 (7 componentes)
+│   │   ├── finance-catalog.ts      #       buildFinanceCatalog(): contrato + clases Angular → AngularCatalog
 │   │   └── finance-component.base.ts  #    FinanceComponent: base con lectores tolerantes + dispatch()
 │   └── shared/                     #    Utilidades transversales (Básico/Intermedio ↔ Avanzado)
 │       ├── chart-theme.ts          #       Tema y fábricas de gráficos ApexCharts (Intermedio + Avanzado)
@@ -335,7 +337,7 @@ src/app/
 
 > **Historial determinista y reproducible.** El mes actual y el anterior salen de semillas fijas; los **4 meses previos** los genera `finance-data.ts` a partir del perfil de comercios de cada cuenta usando un **PRNG con semilla** (`mulberry32` + hash `FNV-1a` de `cuenta:mes`). Así el historial es variado pero **idéntico en cada recarga** — la demo se ve igual siempre. Este historial solo alimenta la lista de movimientos: la comparación mes-a-mes y la proyección siguen mirando únicamente el mes actual y el anterior.
 
-Construido con las **mejores prácticas de Angular 22**: componentes _standalone_, **Signals** (`signal`, `computed`, `effect`, `afterRenderEffect`), `inject()`, **Signal Inputs/Outputs** (`input()`, `output()`), `viewChild()`, el nuevo _control flow_ (`@if`, `@for`) y **rutas perezosas** (`loadComponent`). La UI usa **Angular Material 3** (tema azure/blue, tokens `--mat-sys-*`): sidenav, tabs, listas, tabla, chips, slider, progress bar, skeletons con _shimmer_ y animaciones sutiles. El nivel Avanzado suma **`@a2ui/angular/v0_9`** y **`@a2ui/web_core/v0_9`** (el renderer oficial del protocolo A2UI).
+Construido con las **mejores prácticas de Angular 22**: componentes _standalone_, **Signals** (`signal`, `computed`, `effect`, `afterRenderEffect`), `inject()`, **Signal Inputs/Outputs** (`input()`, `output()`), `viewChild()`, el nuevo _control flow_ (`@if`, `@for`) y **rutas perezosas** (`loadComponent`). La UI usa **Angular Material 3** (tema azure/blue, tokens `--mat-sys-*`): sidenav, tabs, listas, tabla, chips, slider, progress bar, skeletons con _shimmer_ y animaciones sutiles. El nivel Avanzado suma **`@a2ui/angular`** y **`@a2ui/web_core`** (el renderer oficial del protocolo A2UI, v1.0).
 
 ---
 
@@ -467,10 +469,13 @@ La app está **instrumentada** para exponer cada llamada al modelo (ver [`GenUiS
 
 ## Notas de build
 
-- **Rutas perezosas por nivel.** Cada nivel se carga con `loadComponent` ([`app.routes.ts`](src/app/app.routes.ts)) y genera su propio _chunk_ (`basico-page`, `intermedio-page`, `avanzado-page`). Así el nivel Básico arranca ligero, sin arrastrar ApexCharts ni las 6 tarjetas del catálogo, que solo se descargan al entrar a Intermedio/Avanzado.
+- **Rutas perezosas por nivel.** Cada nivel se carga con `loadComponent` ([`app.routes.ts`](src/app/app.routes.ts)) y genera su propio _chunk_ (`basico-page`, `intermedio-page`, `avanzado-page`). Así el nivel Básico arranca ligero, sin arrastrar ApexCharts ni las 7 tarjetas del catálogo, que solo se descargan al entrar a Intermedio/Avanzado.
 - **ApexCharts se carga de forma perezosa.** `ng-apexcharts` importa dinámicamente `apexcharts/client` y registra `window.ApexCharts` por sí mismo, así que **no** hay script global en `angular.json` (`"scripts": []`). El motor de gráficos (~800 kB) solo se descarga cuando se renderiza el primer componente con gráfico.
-- **El renderer A2UI vive en la raíz.** `A2UI_RENDERER_CONFIG` se provee en [`app.config.ts`](src/app/app.config.ts) y `A2uiRendererService` es `providedIn: 'root'`, así que el nivel Avanzado puede cargarse de forma perezosa sin problemas de inyección. Es inocuo para Básico/Intermedio.
-- **Presupuestos** (`angular.json`): _initial_ 1 MB warn / 1.5 MB error; _anyComponentStyle_ 6 kB warn / 8 kB error. El _bundle_ inicial ronda hoy los **1,31 MB** (254 kB transferidos), así que el build emite la advertencia del presupuesto de 1 MB pero se completa correctamente.
+- **El renderer A2UI vive en la raíz.** `provideA2UI(...)` se usa en [`app.config.ts`](src/app/app.config.ts) y `A2uiRendererService` es `providedIn: 'root'`, así que el nivel Avanzado puede cargarse de forma perezosa sin problemas de inyección. Es inocuo para Básico/Intermedio.
+- **Protocolo A2UI v1.0** con `@a2ui/angular` 0.14 y `@a2ui/web_core` 0.15. Todo se importa desde la raíz de los paquetes (no hay `/v1_0`); el selector `<a2ui-v09-surface>` conserva su nombre histórico aunque ya renderiza v1.0.
+- **Componentes universales.** `provideA2UI` monta cada widget como _web component_ (`<a2ui-ng-appquickstats>`, …), el modo recomendado en v1.0. Como el gráfico se crea antes de que el navegador mida su contenedor, los gráficos circulares (plan de ahorro y asesor de crédito) llevan ancho fijo en [`chart-theme.ts`](src/app/catalog/shared/chart-theme.ts).
+- **Avisos de dependencias pares, esperados:** `@a2ui/angular` 0.14 declara Angular `^21.2.5` (funciona con 22), `@a2ui/markdown-it` 0.2.2 pide `@a2ui/web_core ^0.14` (solo usa sus tipos) y `ng-apexcharts` pide ApexCharts 5. La app ya no depende de `zod`: las librerías A2UI traen su propia copia.
+- **Presupuestos** (`angular.json`): _initial_ 1 MB warn / 1.5 MB error; _anyComponentStyle_ 6 kB warn / 8 kB error. El _bundle_ inicial ronda hoy los **1,24 MB** (259 kB transferidos), así que el build emite la advertencia del presupuesto de 1 MB pero se completa correctamente. `validate-color` (una dependencia CommonJS de `web_core`) está en `allowedCommonJsDependencies`.
 
 ---
 
@@ -489,7 +494,8 @@ pnpm test         # Pruebas unitarias
 
 ### Protocolo A2UI (nivel Avanzado)
 
-- [a2ui.org — sitio del proyecto](https://a2ui.org/) · [¿Qué es A2UI?](https://a2ui.org/introduction/what-is-a2ui/) · [Especificación v0.9](https://a2ui.org/specification/v0.9-a2ui/)
+- [a2ui.org — sitio del proyecto](https://a2ui.org/) · [¿Qué es A2UI?](https://a2ui.org/introduction/what-is-a2ui/) · [Especificación v1.0](https://a2ui.org/specification/v1.0-a2ui/)
+- [Guía de evolución v0.9 → v1.0](https://github.com/a2ui-project/a2ui/blob/main/specification/v1_0/docs/evolution_guide.md) — qué cambió y por qué (`"1.0"`, `@path`/`@call`, `createSurface` con todo dentro, catálogos mezclables por componente)
 - [Guía de desarrollo de agentes](https://a2ui.org/guides/agent-development/) — el enfoque que recomienda el proyecto es **prompt + validación posterior**, no salida forzada; advierte expresamente que los modelos envuelven el JSON en _fences_ de markdown y cometen otros errores. (La v0.8 era _"Structured Output first"_; la v0.9 marcó un giro a _"Prompt-First"_.)
 - [`a2ui-project/a2ui` en GitHub](https://github.com/a2ui-project/a2ui)
 

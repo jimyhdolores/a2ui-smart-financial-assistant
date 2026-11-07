@@ -1,4 +1,4 @@
-import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular/v0_9';
+import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular';
 import { Component, ElementRef, afterRenderEffect, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -50,7 +50,7 @@ interface Suggestion {
  * ║  El enrutado es IDÉNTICO al del nivel Intermedio: el mismo `route()`  ║
  * ║  y el mismo contrato de `ui-router.model.ts`. Lo único que cambia es  ║
  * ║  el motor de render: en vez de NgComponentOutlet, TypeScript arma el  ║
- * ║  stream A2UI v0.9 real (createSurface/updateComponents/                ║
+ * ║  stream A2UI v1.0 real (createSurface/updateComponents/                ║
  * ║  updateDataModel) y lo entrega al renderer oficial `@a2ui/angular`.   ║
  * ║  Cada turno abre su propia superficie — y cada sección la suya, para  ║
  * ║  que su round-trip (slider, filtros) sea independiente; el toggle     ║
@@ -171,7 +171,7 @@ export class Chat {
       assistant.durationMs = durationMs;
 
       // 2.- Por cada sección: TypeScript calcula el `data`, lo traduce al
-      //     stream A2UI v0.9 y abre su PROPIA superficie apilada. Superficies
+      //     stream A2UI v1.0 y abre su PROPIA superficie apilada. Superficies
       //     independientes ⇒ el round-trip (slider/filtros) de cada una es aislado.
       const turn = ++this.turn;
       const surfaces: string[] = [];

@@ -1,30 +1,33 @@
 /**
  * ╔═══════════════════════════════════════════════════════════════════════╗
- * ║  PROTOCOLO A2UI v0.9 — constantes y descriptores del dominio "finance" ║
+ * ║  PROTOCOLO A2UI v1.0 — constantes y descriptores del dominio "finance" ║
  * ║                                                                       ║
  * ║  Este SÍ es el protocolo A2UI, y solo lo usa el nivel Avanzado.       ║
  * ║  A diferencia de `ui-router.model.ts` (el contrato casero del          ║
  * ║  ENRUTADOR de Nano: qué componentes + params, común a Intermedio y     ║
  * ║  Avanzado), este archivo describe el PROTOCOLO real                     ║
- * ║  a2ui.org v0.9 que TypeScript emite hacia el renderer oficial:         ║
+ * ║  a2ui.org v1.0 que TypeScript emite hacia el renderer oficial:         ║
  * ║  ids de superficie/catálogo, el root del data-model, los nombres de    ║
  * ║  las `action.event`, y — clave — el mapa `COMPONENT_FIELDS` con los     ║
  * ║  campos que cada componente bindea por JSON Pointer (`/data/<campo>`).  ║
  * ║                                                                       ║
  * ║  Los nombres de campo coinciden 1:1 con las claves que emiten los      ║
  * ║  builders `*Data()` de `finance-analytics.ts`: así el message-builder  ║
- * ║  puede generar los `{ path: "/data/<campo>" }` sin duplicar literales.  ║
+ * ║  puede generar los `{ "@path": "/data/<campo>" }` sin duplicar literales.║
  * ╚═══════════════════════════════════════════════════════════════════════╝
  */
-import type { A2uiMessage } from '@a2ui/web_core/v0_9';
+import type { AgentToRendererMessage } from '@a2ui/web_core/v1_0';
+import financeCatalogDocument from '../catalog/avanzado/finance-catalog.v1.json';
 import type { UiComponent } from './ui-router.model';
 
-/** Re-export del tipo del envelope A2UI (createSurface/updateComponents/…). */
-export type { A2uiMessage };
+/** Un mensaje A2UI v1.0 del agente al renderer (createSurface/updateComponents/…). */
+export type A2uiMessage = AgentToRendererMessage;
 
-/** Id del catálogo custom de finanzas (debe casar con `FinanceCatalog`). */
-export const FINANCE_CATALOG_ID =
-  'https://a2ui-smart-financial-assistant/catalogs/finance/v0_9';
+/** Versión del protocolo que hablan el builder y el renderer. */
+export const A2UI_VERSION = '1.0';
+
+/** Id del catálogo custom de finanzas: lo dicta el propio documento del catálogo. */
+export const FINANCE_CATALOG_ID: string = financeCatalogDocument.catalogId;
 
 /** Raíz del data-model donde vive el `data` calculado por TypeScript. */
 export const DATA_ROOT = '/data';

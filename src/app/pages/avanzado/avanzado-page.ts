@@ -6,7 +6,7 @@ import { Chat } from './chat/chat';
 
 /**
  * ╔═══════════════════════════════════════════════════════════════════════╗
- * ║  AvanzadoPage — NIVEL 3: el protocolo A2UI v0.9 real                   ║
+ * ║  AvanzadoPage — NIVEL 3: el protocolo A2UI v1.0 real                   ║
  * ║                                                                       ║
  * ║  La MISMA decisión de Nano que el nivel Intermedio, pero renderizada   ║
  * ║  con el protocolo estándar A2UI: TypeScript emite el stream JSONL      ║

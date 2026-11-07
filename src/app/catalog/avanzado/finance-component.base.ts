@@ -1,10 +1,6 @@
 import { Directive, inject } from '@angular/core';
-import {
-  A2uiRendererService,
-  CatalogComponent,
-  type BoundProperty,
-} from '@a2ui/angular/v0_9';
-import type { ComponentApi } from '@a2ui/web_core/v0_9';
+import { A2uiRendererService, CatalogComponent, type BoundProperty } from '@a2ui/angular';
+import type { ComponentApi } from '@a2ui/web_core';
 
 /**
  * ╔═══════════════════════════════════════════════════════════════════════╗

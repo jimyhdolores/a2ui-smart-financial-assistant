@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { NgApexchartsModule } from 'ng-apexcharts';
-import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular/v0_9';
+import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular';
 
 import { Account, CATEGORY_META, CURRENCY, PAYMENT_METHOD_META } from '../../../models/finance.model';
 import { A2uiMessageBuilder } from '../../../services/a2ui-message-builder';

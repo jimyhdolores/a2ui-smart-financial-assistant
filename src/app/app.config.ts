@@ -5,8 +5,8 @@ import {
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { A2UI_RENDERER_CONFIG } from '@a2ui/angular/v0_9';
-import type { A2uiClientAction } from '@a2ui/web_core/v0_9';
+import { provideA2UI } from '@a2ui/angular';
+import type { ActionPayload } from '@a2ui/web_core';
 
 import { routes } from './app.routes';
 import { buildFinanceCatalog } from './catalog/avanzado/finance-catalog';
@@ -18,19 +18,17 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     // Angular Material necesita animaciones; las cargamos de forma diferida.
     provideAnimationsAsync(),
-    // Renderer A2UI v0.9 (solo lo consume el nivel Avanzado): catálogo custom de
-    // finanzas + handler global de actions. La fábrica corre en contexto de
-    // inyección; el actionHandler delega en A2uiActionService (recálculo
-    // determinista en TypeScript). Inocuo para los niveles Básico/Intermedio.
-    {
-      provide: A2UI_RENDERER_CONFIG,
-      useFactory: () => {
-        const actions = inject(A2uiActionService);
-        return {
-          catalogs: [buildFinanceCatalog()],
-          actionHandler: (action: A2uiClientAction) => actions.handle(action),
-        };
-      },
-    },
+    // Renderer A2UI v1.0 (solo lo consume el nivel Avanzado): catálogo custom de
+    // finanzas + handler global de actions. `provideA2UI` activa los componentes
+    // universales (web components), el modo recomendado en v1.0. La fábrica corre
+    // en contexto de inyección; el actionHandler delega en A2uiActionService
+    // (recálculo determinista en TypeScript). Inocuo para Básico/Intermedio.
+    provideA2UI(() => {
+      const actions = inject(A2uiActionService);
+      return {
+        catalogs: [buildFinanceCatalog()],
+        actionHandler: (action: ActionPayload) => actions.handle(action),
+      };
+    }),
   ],
 };

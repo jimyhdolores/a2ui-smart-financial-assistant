@@ -52,7 +52,7 @@ interface Suggestion {
  * ║  muestra los ms de inferencia y un toggle con la decisión del modelo. ║
  * ║                                                                       ║
  * ║  El nivel Avanzado parte de esta MISMA decisión (`route()`) y solo    ║
- * ║  cambia el motor de render por el protocolo A2UI v0.9.                ║
+ * ║  cambia el motor de render por el protocolo A2UI v1.0.                ║
  * ╚═══════════════════════════════════════════════════════════════════════╝
  */
 @Component({
