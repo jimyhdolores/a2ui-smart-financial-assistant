@@ -4,6 +4,8 @@
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
+    "postinstall": "node scripts/setup-agent.mjs",
+    "setup:agent": "node scripts/setup-agent.mjs",
     "start": "pnpm --filter web start",
     "dev": "concurrently --kill-others-on-fail --names agente,web --prefix-colors magenta,cyan \"pnpm dev:agent\" \"pnpm dev:web\"",
     "dev:web": "pnpm --filter web start",

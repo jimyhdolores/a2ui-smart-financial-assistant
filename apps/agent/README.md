@@ -14,9 +14,12 @@ pregunta ─▶ contexto (Python) ─▶ Gemini escribe texto + <a2ui-json> ─�
 Desde la raíz del monorepo:
 
 ```bash
-cp apps/agent/.env.example apps/agent/.env   # pon tu GEMINI_API_KEY
-pnpm dev:agent                               # o `pnpm dev` para levantar también el front
+pnpm install       # instala el front y este agente (uv sync) y crea .env si falta
+                   # → pon tu GEMINI_API_KEY en apps/agent/.env
+pnpm dev:agent     # o `pnpm dev` para levantar también el front
 ```
+
+Solo el agente: `pnpm setup:agent` (equivale a `uv sync` aquí más crear el `.env`).
 
 Sin la raíz: `uv run fastapi dev --port 8787` dentro de `apps/agent` (el proxy del front apunta a ese puerto).
 

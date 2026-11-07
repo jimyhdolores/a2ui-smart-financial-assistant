@@ -472,17 +472,23 @@ Dentro de la app, el **chip de estado** de la barra superior refleja en tiempo r
 
 ## Puesta en marcha
 
+**Requisitos en la máquina:** Node 24+, `pnpm` (con `corepack enable` se usa la versión fijada en `package.json`) y [`uv`](https://docs.astral.sh/uv/getting-started/installation/) para la parte Python. No hace falta instalar Python a mano: `uv` descarga la versión que pide el agente.
+
 ```bash
-# 1. Instalar dependencias del front (pnpm workspaces)
+# 1. Un solo comando instala los DOS lados del monorepo:
+#    el front (pnpm) y, al terminar, el agente Python (uv sync, vía postinstall).
+#    Si no existe, también crea apps/agent/.env a partir de .env.example.
 pnpm install
 
 # 2a. Solo el front: los tres niveles con Gemini Nano
 pnpm start
 
 # 2b. Front + agente en el servidor (para el interruptor del nivel Avanzado)
-cp apps/agent/.env.example apps/agent/.env    # y pon tu GEMINI_API_KEY (ver abajo)
+#     → antes, pon tu GEMINI_API_KEY en apps/agent/.env (ver abajo)
 pnpm dev
 ```
+
+> Si `pnpm install` avisa que no encontró `uv`, el front queda instalado igual: instala `uv` y ejecuta `pnpm setup:agent` para preparar solo el agente ([`scripts/setup-agent.mjs`](scripts/setup-agent.mjs)).
 
 Abre `http://localhost:4200/` en tu Chrome ya configurado (pasos anteriores). La app redirige a `/basico` por defecto. Con `pnpm dev`, el agente queda en `http://127.0.0.1:8787` (un puerto poco común, para no chocar con otros servicios en el 8000) y el front le habla a través de `/api` (el proxy de desarrollo de Angular, [`proxy.conf.json`](apps/web/proxy.conf.json)).
 
@@ -577,6 +583,8 @@ La app está **instrumentada** para exponer cada llamada al modelo (ver [`GenUiS
 Desde la raíz del monorepo:
 
 ```bash
+pnpm install               # Instala el front y el agente Python (uv sync) en un solo paso
+pnpm setup:agent           # Solo prepara el agente Python (uv sync + .env si falta)
 pnpm start                 # Solo el front (ng serve) en http://localhost:4200/
 pnpm dev                   # Front + agente Python a la vez (el agente en http://127.0.0.1:8787)
 pnpm dev:agent             # Solo el agente (fastapi dev, recarga en caliente)
