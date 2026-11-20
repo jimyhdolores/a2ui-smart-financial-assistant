@@ -63,6 +63,16 @@
                 <div class="generated">
                   @for (sid of m.surfaces; track sid) {
                     <a2ui-v09-surface [surfaceId]="sid" />
+                    <!-- Lo que el visor rechazó de esta superficie (no cumplía el catálogo) -->
+                    @for (e of a2uiErrors.forSurface(sid); track $index) {
+                      <div class="msg-error">
+                        <mat-icon>report</mat-icon>
+                        <div>
+                          <strong>El visor A2UI rechazó un mensaje</strong>
+                          <p>{{ e }}</p>
+                        </div>
+                      </div>
+                    }
                   }
                 </div>
               }
