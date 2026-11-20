@@ -45,3 +45,6 @@ Thumbs.db
 .claude/
 guion-demo-codigo.md
 presentacion.md
+
+# Configuración local de servidores MCP (cada quien la suya)
+.mcp.json
