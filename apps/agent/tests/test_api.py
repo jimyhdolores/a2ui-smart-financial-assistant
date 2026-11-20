@@ -8,7 +8,7 @@ from finance_agent.main import create_app
 from finance_agent.protocol import BASIC_CATALOG_ID, FINANCE_CATALOG_ID
 from finance_agent.settings import Settings
 
-from .conftest import CAPABILITIES, FakeLlm, example, llm_response, parse_sse
+from .conftest import CAPABILITIES, FakeLlm, example, llm_response, parse_sse, wrap_in_card
 
 
 def _client(llm: FakeLlm | None) -> TestClient:
@@ -82,6 +82,19 @@ def test_bloque_invalido_se_reintenta_citando_el_error():
     assert llm.calls[-1].get("retry") and "no era válida" in llm.calls[-1]["user"]
     components = next(d["data"] for n, d in events if n == "a2ui" and "updateComponents" in d["data"])["updateComponents"]["components"]
     assert any(c["component"] == "AppMovementsTable" for c in components)
+
+
+def test_widget_mal_anidado_se_reintenta_citando_la_regla():
+    """Un widget dentro de una Card rompe allowedParents: el SDK lo rechaza y Gemini corrige."""
+    llm = FakeLlm(
+        llm_response("Aquí tienes tus pagos.", wrap_in_card(example("pagos-con-yape"), "table")),
+        retry=llm_response("Corregido.", example("pagos-con-yape")),
+    )
+    with _client(llm) as client:
+        events = _ask(client, "Solo mis Yape")
+    done = events[-1][1]
+    assert done["retries"] == 1 and done["fallback"] is False
+    assert "cannot be placed under parent" in llm.calls[-1]["user"]
 
 
 def test_si_falla_dos_veces_usa_la_pantalla_de_respaldo():

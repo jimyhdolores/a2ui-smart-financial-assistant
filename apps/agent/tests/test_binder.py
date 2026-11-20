@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+from a2ui.core import A2uiValidationError
 from a2ui.utils import validate_payload
 
 from finance_agent.binder import bind_surface, fallback_structure, normalize_structure
@@ -9,7 +11,7 @@ from finance_agent.catalogs import build_generator
 from finance_agent.protocol import BASIC_CATALOG_ID, FINANCE_CATALOG_ID
 from finance_agent.settings import DEFAULT_CATALOG_DIR
 
-from .conftest import CAPABILITIES, example
+from .conftest import CAPABILITIES, example, wrap_in_card
 
 
 def _active_catalogs():
@@ -62,6 +64,14 @@ def test_el_stream_final_cumple_los_catalogos(analytics, account):
     for name in ("resumen-del-mes", "pagos-con-yape"):
         messages = bind_surface(example(name), analytics=analytics, account=account)
         validate_payload(_active_catalogs(), messages)  # lanza si algo no cumple
+
+
+def test_un_widget_dentro_de_una_card_no_cumple_el_catalogo(analytics, account):
+    """Regla de anidamiento de A2UI 1.0: los widgets solo van en la Column raíz (o como raíz)."""
+    messages = bind_surface(wrap_in_card(example("pagos-con-yape"), "table"), analytics=analytics, account=account)
+    with pytest.raises(A2uiValidationError, match="cannot be placed under parent") as exc:
+        validate_payload(_active_catalogs(), messages)
+    assert exc.value.code == "UNALLOWED_PARENT"
 
 
 def test_pantalla_de_respaldo_es_valida(analytics, account):

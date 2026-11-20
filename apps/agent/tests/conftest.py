@@ -20,6 +20,16 @@ def example(name: str) -> list[dict]:
     return json.loads((EXAMPLES_DIR / f"{name}.json").read_text(encoding="utf-8"))
 
 
+def wrap_in_card(structure: list[dict], widget_id: str) -> list[dict]:
+    """Mete un widget dentro de una Card: anidamiento que el catálogo prohíbe (allowedParents)."""
+    structure = json.loads(json.dumps(structure))
+    components = structure[1]["updateComponents"]["components"]
+    root = next(c for c in components if c["id"] == "root")
+    root["children"] = ["box" if child == widget_id else child for child in root["children"]]
+    components.append({"id": "box", "component": "Card", "child": widget_id})
+    return structure
+
+
 def llm_response(narrative: str, structure: list[dict]) -> str:
     """Respuesta "como la escribiría Gemini": una frase y un bloque <a2ui-json>."""
     return f"{narrative}\n<a2ui-json>\n{json.dumps(structure, ensure_ascii=False)}\n</a2ui-json>"

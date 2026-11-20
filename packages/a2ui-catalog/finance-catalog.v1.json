@@ -5,10 +5,11 @@
   "title": "Catálogo de finanzas · Fintech Nano",
   "description": "Los 7 widgets del asistente financiero. Cada campo acepta un literal o un binding {\"@path\": \"/…\"} al modelo de datos de la superficie.",
   "catalogId": "https://a2ui-smart-financial-assistant/catalogs/finance/v1_0",
-  "instructions": "Widgets de finanzas: cada uno es una tarjeta completa que calcula sus cifras en el servidor del agente. Al usarlos escribe solo id, component, catalogId, opcionalmente title y los parámetros que indique su descripción. Nunca escribas data ni cifras: el servidor las completa.",
+  "instructions": "Widgets de finanzas: cada uno es una tarjeta completa que calcula sus cifras en el servidor del agente. Al usarlos escribe solo id, component, catalogId, opcionalmente title y los parámetros que indique su descripción. Nunca escribas data ni cifras: el servidor las completa. Cada widget va como hijo directo de la Column raíz, nunca dentro de una Card ni de una Row.",
   "components": {
     "AppQuickStats": {
       "type": "object",
+      "allowedParents": ["Surface", "Column"],
       "description": "Tira compacta de 4 cifras del mes: disponible, gasto, gastos hormiga y ahorro potencial. Buena cabecera de un resumen. Sin parámetros.",
       "properties": {
         "component": {
@@ -33,6 +34,7 @@
     },
     "AppAntExpense": {
       "type": "object",
+      "allowedParents": ["Surface", "Column"],
       "description": "Gastos hormiga: veredicto con color, total del mes, comparación con el mes anterior, desglose por categoría y cuándo se agotaría el saldo. Parámetro: interactive (true muestra el simulador «¿y si recorto X%?»).",
       "properties": {
         "component": {
@@ -109,6 +111,7 @@
     },
     "AppSpendingReport": {
       "type": "object",
+      "allowedParents": ["Surface", "Column"],
       "description": "Reporte de gastos del mes: cifras clave, dona por categoría, tendencia semanal y las 5 compras más grandes. Parámetro: title (opcional).",
       "properties": {
         "component": {
@@ -173,6 +176,7 @@
     },
     "AppRecommendations": {
       "type": "object",
+      "allowedParents": ["Surface", "Column"],
       "description": "Consejos personalizados con su impacto en dinero, nivel de riesgo y alertas. Parámetro: title (opcional).",
       "properties": {
         "component": {
@@ -213,6 +217,7 @@
     },
     "AppSavingsPlan": {
       "type": "object",
+      "allowedParents": ["Surface", "Column"],
       "description": "Meta de ahorro con su progreso, el ahorro mensual posible y una proyección a 3 meses. Parámetros: title (opcional); goalName y goalTarget si el usuario menciona una meta.",
       "properties": {
         "component": {
@@ -265,6 +270,7 @@
     },
     "AppCreditAdvisor": {
       "type": "object",
+      "allowedParents": ["Surface", "Column"],
       "description": "Capacidad de crédito: límite, deuda, disponible, uso y cuota máxima. Parámetros: title (opcional); product, price y months si el usuario pregunta por una compra concreta (simula la cuota y da un veredicto).",
       "properties": {
         "component": {
@@ -349,6 +355,7 @@
     },
     "AppMovementsTable": {
       "type": "object",
+      "allowedParents": ["Surface", "Column"],
       "description": "Tabla de movimientos filtrada, con chips de filtro rápido. Parámetros: title (opcional) y filter (qué movimientos mostrar).",
       "properties": {
         "component": {
