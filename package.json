@@ -3,6 +3,16 @@
   "version": "0.0.0",
   "private": true,
   "packageManager": "pnpm@9.15.4",
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "@a2ui/angular>@angular/core": "22",
+        "@a2ui/angular>@angular/common": "22",
+        "@a2ui/angular>@angular/platform-browser": "22",
+        "@a2ui/markdown-it>@a2ui/web_core": "0.15"
+      }
+    }
+  },
   "scripts": {
     "postinstall": "node scripts/setup-agent.mjs",
     "setup:agent": "node scripts/setup-agent.mjs",

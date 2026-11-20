@@ -8,6 +8,7 @@ import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular';
 
 import { Account, CATEGORY_META, CURRENCY, PAYMENT_METHOD_META } from '../../../models/finance.model';
 import { A2uiMessageBuilder } from '../../../services/a2ui-message-builder';
+import { A2uiRendererErrorsService } from '../../../services/a2ui-renderer-errors';
 import { FinanceAnalyticsService } from '../../../services/finance-analytics';
 import { FinanceDataService } from '../../../services/finance-data';
 import { ChartConfig, donutChart } from '../../../catalog/shared/chart-theme';
@@ -49,6 +50,8 @@ export class AccountSummary {
   private readonly analytics = inject(FinanceAnalyticsService);
   private readonly renderer = inject(A2uiRendererService);
   private readonly builder = inject(A2uiMessageBuilder);
+  /** Entrega al visor y recoge lo que rechaza (se muestra bajo el hero). */
+  protected readonly a2uiErrors = inject(A2uiRendererErrorsService);
 
   /** "Hoy" para calcular el offset de mes de cada movimiento. */
   private readonly today = new Date();
@@ -91,10 +94,11 @@ export class AccountSummary {
     // la pestaña o cambio de cuenta— NO la recreamos: `createSurface` lanzaría
     // "Surface already exists". En ese caso solo refrescamos su data-model.
     const exists = this.renderer.surfaceGroup.getSurface(ANT_SURFACE);
-    this.renderer.processMessages(
+    this.a2uiErrors.apply(
       exists
         ? [this.builder.updateData(ANT_SURFACE, data)]
         : this.builder.build('AppAntExpense', data, ANT_SURFACE),
+      ANT_SURFACE,
     );
   }
 

@@ -1,4 +1,4 @@
-import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular';
+import { SurfaceComponent } from '@a2ui/angular';
 import { DecimalPipe } from '@angular/common';
 import {
   Component,
@@ -21,6 +21,7 @@ import { MatInputModule } from '@angular/material/input';
 import { makeSurfaceId } from '../../../models/a2ui-protocol';
 import { A2uiMessageBuilder } from '../../../services/a2ui-message-builder';
 import { AgentMode, AgentModeService } from '../../../services/agent-mode';
+import { A2uiRendererErrorsService } from '../../../services/a2ui-renderer-errors';
 import { FinanceAnalyticsService } from '../../../services/finance-analytics';
 import { FinanceDataService } from '../../../services/finance-data';
 import { CompositeDecision, GenUiService } from '../../../services/gen-ui';
@@ -90,8 +91,9 @@ interface Suggestion {
  * ║   · En el servidor (Gemini, modelo grande): un agente Python compone   ║
  * ║     la pantalla con el catálogo y manda los mensajes A2UI por la red.  ║
  * ║                                                                       ║
- * ║  En ambos casos todo termina en `renderer.processMessages(...)`: el    ║
- * ║  renderer, el catálogo y los componentes son exactamente los mismos.   ║
+ * ║  En ambos casos todo termina en `processMessagesWithErrors(...)`: el   ║
+ * ║  renderer, el catálogo y los componentes son exactamente los mismos,   ║
+ * ║  y lo que el visor rechace se anota bajo su superficie.                ║
  * ╚═══════════════════════════════════════════════════════════════════════╝
  */
 @Component({
@@ -113,8 +115,9 @@ interface Suggestion {
 export class Chat {
   private readonly finance = inject(FinanceDataService);
   private readonly analytics = inject(FinanceAnalyticsService);
-  private readonly renderer = inject(A2uiRendererService);
   private readonly builder = inject(A2uiMessageBuilder);
+  /** Entrega al visor y recoge lo que rechaza (se muestra bajo cada superficie). */
+  protected readonly a2uiErrors = inject(A2uiRendererErrorsService);
   protected readonly ai = inject(GenUiService);
   protected readonly agentMode = inject(AgentModeService);
   protected readonly remote = inject(RemoteAgentService);
@@ -248,7 +251,9 @@ export class Chat {
         const data = this.analytics.buildData(s.componentToRender, s.params, account);
         const surfaceId = makeSurfaceId(turn, i);
         const stream = this.builder.build(s.componentToRender, data, surfaceId);
-        this.renderer.processMessages(stream);
+        // Si el visor rechaza algo (no cumple el catálogo), no rompe el turno:
+        // el error queda anotado bajo esta superficie.
+        this.a2uiErrors.apply(stream, surfaceId);
         surfaces.push(surfaceId);
         streams.push(stream.map((m) => JSON.stringify(m, null, 2)).join('\n'));
       });

@@ -29,6 +29,15 @@
 <!-- ── Hero de gastos hormiga (renderizado por A2UI; el slider hace round-trip) ── -->
 <section class="ant-section">
   <a2ui-v09-surface [surfaceId]="antSurface" />
+  @for (e of a2uiErrors.forSurface(antSurface); track $index) {
+    <div class="a2ui-error">
+      <mat-icon>report</mat-icon>
+      <div>
+        <strong>El visor A2UI rechazó un mensaje</strong>
+        <p>{{ e }}</p>
+      </div>
+    </div>
+  }
 </section>
 
 <!-- ── Distribución por categoría + movimientos recientes ────────────────── -->

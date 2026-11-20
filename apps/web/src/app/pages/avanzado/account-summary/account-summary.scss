@@ -75,6 +75,30 @@
   }
 }
 
+// ── Error del visor A2UI (mensaje rechazado por no cumplir el catálogo) ─────
+.a2ui-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  margin-top: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--mat-sys-error) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mat-sys-error) 25%, transparent);
+
+  mat-icon {
+    color: var(--mat-sys-error);
+    flex-shrink: 0;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    font-size: 0.85rem;
+    color: var(--mat-sys-on-surface-variant);
+    word-break: break-word;
+  }
+}
+
 // ── Grid dona + recientes ───────────────────────────────────────────────────
 .grid {
   display: grid;

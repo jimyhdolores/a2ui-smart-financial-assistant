@@ -18,6 +18,7 @@ El repo es un **monorepo**: el front Angular (`apps/web`), un **agente en Python
 | | |
 | --- | --- |
 | [¿De qué trata?](#de-qué-trata-el-proyecto) | La idea, el reparto LLM/TypeScript y el flujo de un turno |
+| [A2UI 1.0 estable](#a2ui-10-ya-es-estable-noviembre-2026) | Qué trajo el lanzamiento de noviembre de 2026 y qué usa la demo |
 | [Los tres niveles](#los-tres-niveles-de-la-demo) | Qué enseña cada uno y en qué se diferencian |
 | [Mapa de contratos](#mapa-de-contratos-qué-es-obligatorio-y-qué-me-inventé-yo) | Las tres estructuras JSON del proyecto y cuál es obligatoria |
 | [El catálogo generativo](#el-catálogo-generativo) | Los componentes que el modelo puede invocar |
@@ -51,6 +52,28 @@ Es **la** fuente de confusión de este proyecto, así que va por delante:
 Los niveles Básico e Intermedio implementan **el patrón** con un contrato inventado para esta demo. **No usan el protocolo.** Por eso ningún archivo suyo lleva "a2ui" en el nombre: si ves `a2ui` en una ruta, es nivel Avanzado.
 
 > **Dicho en una frase:** _"Los tres niveles dejan que la IA elija la pantalla. Solo el último lo hace con un estándar abierto en vez de con código mío."_
+
+### A2UI 1.0 ya es estable (noviembre 2026)
+
+El **11 de noviembre de 2026** Google anunció [**A2UI 1.0**](https://developers.googleblog.com/a2ui-10-build-delightful-fast-reliable-agentic-experiences/), la primera versión estable del protocolo. Hasta entonces era un borrador que cambiaba de una versión a otra. Desde ahora el "idioma" queda fijo y cualquier visor 1.0 entiende a cualquier agente 1.0.
+
+Lo que trae, en corto:
+
+| Novedad | Qué significa |
+| --- | --- |
+| **Funciones en los dos sentidos** | La pantalla puede pedirle algo al agente, y el agente a la pantalla, sin repetir toda la conversación |
+| **Accesibilidad** | Cada pieza puede llevar su etiqueta para lectores de pantalla |
+| **Formato compacto (_Express_)** | El modelo escribe la pantalla con unas tres veces menos texto que en JSON: responde antes y gasta menos |
+| **Datos que no pasan por el modelo** | El servidor rellena los datos sensibles; el modelo solo ve la estructura |
+| **Reglas de anidamiento** | El catálogo dice **dónde** puede ir cada pieza, no solo qué piezas existen |
+| **Pantallas que se dibujan mientras llegan** | No hace falta esperar a la respuesta completa |
+
+**Qué usa esta demo:** el protocolo 1.0 con `@a2ui/angular` 0.14 y `@a2ui/web_core` 0.15, las últimas versiones publicadas en npm. Con el lanzamiento se añadieron dos cosas:
+
+- **El visor dice "no" en voz alta.** Si un mensaje no cumple el catálogo, ya no falla en silencio: aparece _"El visor A2UI rechazó un mensaje"_ debajo de la pantalla afectada ([`a2ui-renderer-errors.ts`](apps/web/src/app/services/a2ui-renderer-errors.ts)).
+- **Reglas de anidamiento.** Cada widget del catálogo declara que solo puede ir como raíz de su superficie (`"allowedParents": ["Surface"]`).
+
+**Qué queda pendiente:** los paquetes del visor que hay hoy en npm se publicaron justo antes del lanzamiento. La versión alineada al 100% con la especificación final (`web_core` 0.16 / `angular` 0.15) ya está en el repositorio de A2UI, pero aún no en npm. Escribe las claves reservadas con arroba (`@catalogId`, `@accessibility`, `@checks`) y trae la accesibilidad completa. Cuando se publique, la actualización será cambiar versiones.
 
 ### La decisión de arquitectura clave: híbrido LLM + matemática local
 
@@ -250,6 +273,8 @@ El catálogo tiene dos mitades:
 
 Las caras **viven solo en el cliente y nunca viajan** — son clases, no se pueden serializar. El emisor únicamente manda el string `"AppQuickStats"`. Si mandara `"AppLoQueSea"`, el renderer no lo encuentra y **no pinta nada**.
 
+Desde A2UI 1.0 el contrato también dice **dónde** puede ir cada pieza. Aquí cada widget lleva `"allowedParents": ["Surface"]`: solo puede ser la raíz de su superficie (`Surface` es el nombre reservado del "lienzo"). Si alguien lo metiera dentro de otra pieza, el visor lo rechaza con el error `UNALLOWED_PARENT`, y ese rechazo se ve bajo la superficie: el chat entrega los mensajes con `processMessagesWithErrors`, que procesa uno a uno y devuelve los errores en vez de romper el turno.
+
 Ahí está el modelo de seguridad completo: **lo que viaja son datos, nunca código ejecutable**, y el emisor puede _pedir_ pero no _ampliar_ la lista. Por eso podrías aceptar UI de un agente en el que no confías del todo: lo peor que puede hacer es pedir algo que no le diste.
 
 > Con v1.0 los campos dejaron de ser "cualquier cosa": el renderer solo resuelve los punteros de los campos que el contrato declara como dinámicos, y valida el resto. Un valor malformado revienta en la validación en vez de llegar al componente.
@@ -286,7 +311,7 @@ En la pestaña **Asistente IA** del nivel Avanzado hay un interruptor: **"En tu 
 
 ### Qué cambia (y qué no)
 
-Todo se junta en la misma línea: `renderer.processMessages(...)`, la puerta de entrada del renderer. En modo local los mensajes se arman ahí mismo ([`chat.ts`](apps/web/src/app/pages/avanzado/chat/chat.ts)); en modo servidor llegan por la red ([`remote-agent.ts`](apps/web/src/app/services/remote-agent.ts)) y entran **por la misma puerta**, de a un mensaje. Ni el catálogo, ni los componentes, ni el template cambian: el cliente ya estaba listo para recibir de cualquiera.
+Todo se junta en la misma puerta del renderer: `processMessagesWithErrors(...)`, a través de [`A2uiRendererErrorsService`](apps/web/src/app/services/a2ui-renderer-errors.ts), que además anota bajo la superficie lo que el visor rechace. En modo local los mensajes se arman ahí mismo ([`chat.ts`](apps/web/src/app/pages/avanzado/chat/chat.ts)); en modo servidor llegan por la red ([`remote-agent.ts`](apps/web/src/app/services/remote-agent.ts)) y entran **por la misma puerta**, de a un mensaje. Ni el catálogo, ni los componentes, ni el template cambian: el cliente ya estaba listo para recibir de cualquiera.
 
 ### Qué viaja por la red
 
@@ -384,8 +409,9 @@ apps/web/src/app/
 │   ├── finance-analytics.ts        # Matemática DETERMINISTA: categorías, hormiga, mes-a-mes, proyección, crédito, filtros
 │   ├── a2ui-message-builder.ts     # [Avanzado] Traduce la decisión del modelo a los 3 mensajes A2UI
 │   ├── a2ui-action.service.ts      # [Avanzado] Handler global de actions A2UI: recalcula en TS o la reenvía al servidor
+│   ├── a2ui-renderer-errors.ts     # [Avanzado] Entrega al visor (processMessagesWithErrors) y anota lo que rechaza
 │   ├── agent-mode.ts               # [Avanzado] El interruptor: ¿el agente vive en el navegador o en el servidor?
-│   └── remote-agent.ts             # [Avanzado] Cliente del agente remoto: POST + SSE → processMessages, uno a uno
+│   └── remote-agent.ts             # [Avanzado] Cliente del agente remoto: POST + SSE → al visor, uno a uno
 │
 ├── catalog/                        # Los "bloques de Lego" que el LLM puede invocar, por nivel
 │   ├── basico/                     #    [Básico] 3 componentes toy + basico-catalog.ts → BASICO_REGISTRY
@@ -570,9 +596,9 @@ La app está **instrumentada** para exponer cada llamada al modelo (ver [`GenUiS
 - **Rutas perezosas por nivel.** Cada nivel se carga con `loadComponent` ([`app.routes.ts`](apps/web/src/app/app.routes.ts)) y genera su propio _chunk_ (`basico-page`, `intermedio-page`, `avanzado-page`). Así el nivel Básico arranca ligero, sin arrastrar ApexCharts ni las 7 tarjetas del catálogo, que solo se descargan al entrar a Intermedio/Avanzado.
 - **ApexCharts se carga de forma perezosa.** `ng-apexcharts` importa dinámicamente `apexcharts/client` y registra `window.ApexCharts` por sí mismo, así que **no** hay script global en `angular.json` (`"scripts": []`). El motor de gráficos (~800 kB) solo se descarga cuando se renderiza el primer componente con gráfico.
 - **El renderer A2UI vive en la raíz.** `provideA2UI(...)` se usa en [`app.config.ts`](apps/web/src/app/app.config.ts) y `A2uiRendererService` es `providedIn: 'root'`, así que el nivel Avanzado puede cargarse de forma perezosa sin problemas de inyección. Es inocuo para Básico/Intermedio.
-- **Protocolo A2UI v1.0** con `@a2ui/angular` 0.14 y `@a2ui/web_core` 0.15. Todo se importa desde la raíz de los paquetes (no hay `/v1_0`); el selector `<a2ui-v09-surface>` conserva su nombre histórico aunque ya renderiza v1.0.
+- **Protocolo A2UI 1.0** (estable desde el 11-nov-2026) con `@a2ui/angular` 0.14 y `@a2ui/web_core` 0.15, las últimas versiones en npm. Todo se importa desde la raíz de los paquetes (no hay `/v1_0`); el selector `<a2ui-v09-surface>` conserva su nombre histórico aunque ya renderiza v1.0. Las claves con arroba de la especificación final (`@catalogId`…) llegarán con `web_core` 0.16 / `angular` 0.15, que aún no están publicadas.
 - **Componentes universales.** `provideA2UI` monta cada widget como _web component_ (`<a2ui-ng-appquickstats>`, …), el modo recomendado en v1.0. Como el gráfico se crea antes de que el navegador mida su contenedor, los gráficos circulares (plan de ahorro y asesor de crédito) llevan ancho fijo en [`chart-theme.ts`](apps/web/src/app/catalog/shared/chart-theme.ts).
-- **Avisos de dependencias pares, esperados:** `@a2ui/angular` 0.14 declara Angular `^21.2.5` (funciona con 22), `@a2ui/markdown-it` 0.2.2 pide `@a2ui/web_core ^0.14` (solo usa sus tipos) y `ng-apexcharts` pide ApexCharts 5. La app ya no depende de `zod`: las librerías A2UI traen su propia copia.
+- **Dependencias pares:** `@a2ui/angular` 0.14 declara Angular `^21.2.5` (funciona con 22) y `@a2ui/markdown-it` 0.2.2 pide `@a2ui/web_core ^0.14` (solo usa sus tipos). Ambos avisos se aceptan de forma explícita en el `package.json` raíz (`pnpm.peerDependencyRules.allowedVersions`). Queda uno esperado: `ng-apexcharts` pide ApexCharts 5. La app ya no depende de `zod`: las librerías A2UI traen su propia copia.
 - **Presupuestos** (`angular.json`): _initial_ 1 MB warn / 1.5 MB error; _anyComponentStyle_ 6 kB warn / 8 kB error. El _bundle_ inicial ronda hoy los **1,34 MB** (~286 kB transferidos) porque el catálogo básico de A2UI (sus web components) se registra en la raíz; el build emite la advertencia del presupuesto de 1 MB (y la de los ~6,5 kB de estilos del chat) pero se completa correctamente. El Markdown de los `Text` se carga de forma perezosa (`provideMarkdownRenderer()` sin argumentos). `validate-color` (una dependencia CommonJS de `web_core`) está en `allowedCommonJsDependencies`.
 - **Monorepo.** `pnpm-workspace.yaml` agrupa `apps/web` y `packages/*`; el front importa el contrato como `@fintech-nano/a2ui-catalog/finance-catalog.v1.json`. El agente Python no es un paquete de pnpm: lo maneja `uv` (`apps/agent/pyproject.toml`) y los scripts de la raíz lo llaman con `uv run --directory apps/agent …`.
 
@@ -599,7 +625,9 @@ pnpm --filter web watch    # Build incremental del front en modo desarrollo
 
 ### Protocolo A2UI (nivel Avanzado)
 
+- [A2UI 1.0: anuncio de la primera versión estable (Google Developers Blog, 11-nov-2026)](https://developers.googleblog.com/a2ui-10-build-delightful-fast-reliable-agentic-experiences/)
 - [a2ui.org — sitio del proyecto](https://a2ui.org/) · [¿Qué es A2UI?](https://a2ui.org/introduction/what-is-a2ui/) · [Especificación v1.0](https://a2ui.org/specification/v1.0-a2ui/)
+- [Definir un catálogo](https://a2ui.org/guides/defining-a-catalog/) — incluye las reglas de anidamiento (`allowedParents` / `allowedChildren`)
 - [Guía de evolución v0.9 → v1.0](https://github.com/a2ui-project/a2ui/blob/main/specification/v1_0/docs/evolution_guide.md) — qué cambió y por qué (`"1.0"`, `@path`/`@call`, `createSurface` con todo dentro, catálogos mezclables por componente)
 - [Guía de desarrollo de agentes](https://a2ui.org/guides/agent-development/) — el enfoque que recomienda el proyecto es **prompt + validación posterior**, no salida forzada; advierte expresamente que los modelos envuelven el JSON en _fences_ de markdown y cometen otros errores. (La v0.8 era _"Structured Output first"_; la v0.9 marcó un giro a _"Prompt-First"_.)
 - [`a2ui-project/a2ui` en GitHub](https://github.com/a2ui-project/a2ui)
