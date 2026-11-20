@@ -8,6 +8,7 @@
   "components": {
     "AppQuickStats": {
       "type": "object",
+      "allowedParents": ["Surface"],
       "description": "Tira compacta de 4 cifras del mes: disponible, gasto, gastos hormiga y ahorro potencial. Buena cabecera de un panel.",
       "properties": {
         "component": { "const": "AppQuickStats" },
@@ -18,6 +19,7 @@
     },
     "AppAntExpense": {
       "type": "object",
+      "allowedParents": ["Surface"],
       "description": "Gastos hormiga: veredicto con color, total del mes, comparación con el mes anterior, desglose por categoría y cuándo se agotaría el saldo. Con `interactive` muestra un deslizador «¿y si recorto X%?».",
       "properties": {
         "component": { "const": "AppAntExpense" },
@@ -41,6 +43,7 @@
     },
     "AppSpendingReport": {
       "type": "object",
+      "allowedParents": ["Surface"],
       "description": "Reporte de gastos del mes: cifras clave, dona por categoría, tendencia semanal y las 5 compras más grandes.",
       "properties": {
         "component": { "const": "AppSpendingReport" },
@@ -61,6 +64,7 @@
     },
     "AppRecommendations": {
       "type": "object",
+      "allowedParents": ["Surface"],
       "description": "Consejos personalizados con su impacto en dinero, nivel de riesgo y alertas.",
       "properties": {
         "component": { "const": "AppRecommendations" },
@@ -75,6 +79,7 @@
     },
     "AppSavingsPlan": {
       "type": "object",
+      "allowedParents": ["Surface"],
       "description": "Meta de ahorro con su progreso, el ahorro mensual posible y una proyección a 3 meses.",
       "properties": {
         "component": { "const": "AppSavingsPlan" },
@@ -92,6 +97,7 @@
     },
     "AppCreditAdvisor": {
       "type": "object",
+      "allowedParents": ["Surface"],
       "description": "Capacidad de crédito: límite, deuda, disponible, uso y cuota máxima. Si hay una compra (product, price, months) simula la cuota y da un veredicto.",
       "properties": {
         "component": { "const": "AppCreditAdvisor" },
@@ -117,6 +123,7 @@
     },
     "AppMovementsTable": {
       "type": "object",
+      "allowedParents": ["Surface"],
       "description": "Tabla de movimientos filtrada, con chips de filtro rápido (acción filterMovements).",
       "properties": {
         "component": { "const": "AppMovementsTable" },
