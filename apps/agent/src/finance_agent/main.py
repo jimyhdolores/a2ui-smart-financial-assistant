@@ -1,6 +1,6 @@
 """Servidor HTTP del agente A2UI (FastAPI).
 
-    GET  /api/health   → modelo, versión A2UI y catálogos que ofrece el agente.
+    GET  /api/health   → modelo, versión A2UI, formato de inferencia, SDK y catálogos del agente.
     POST /api/agent    → una pregunta o un mensaje del renderer; responde con
                          `text/event-stream` (eventos text · thought · a2ui · error · done).
 
@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import AsyncIterable
+from importlib.metadata import version
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -39,9 +40,10 @@ def create_app(settings: Settings | None = None, llm: LlmClient | None = None) -
                 thinking_level=settings.gemini_thinking_level,
             )
         app.state.agent = FinanceAgent(
-            build_generator(settings.a2ui_catalog_dir),
+            build_generator(settings.a2ui_catalog_dir, settings.a2ui_inference_format),
             client,
             expose_llm_output=settings.expose_llm_output,
+            inference_format=settings.a2ui_inference_format,
         )
         try:
             yield
@@ -66,6 +68,8 @@ def create_app(settings: Settings | None = None, llm: LlmClient | None = None) -
             "llmConfigured": agent.llm is not None,
             "a2uiVersion": A2UI_VERSION,
             "mimeType": A2UI_MIME_TYPE,
+            "inferenceFormat": agent.inference_format,
+            "a2uiSdk": version("a2ui-agent-sdk"),
             "catalogs": [BASIC_CATALOG_ID, FINANCE_CATALOG_ID],
         }
 

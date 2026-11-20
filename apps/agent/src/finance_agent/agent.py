@@ -1,7 +1,7 @@
 """Un turno del agente, de la pregunta al stream A2UI.
 
-    pregunta ─▶ contexto (Python) ─▶ Gemini escribe texto + <a2ui-json> ─▶ el SDK
-    separa y VALIDA contra el catálogo ─▶ el binder completa punteros y datos
+    pregunta ─▶ contexto (Python) ─▶ Gemini escribe texto + un bloque A2UI ─▶ el SDK
+    lo traduce (Express o JSON), lo VALIDA contra el catálogo ─▶ el binder completa punteros y datos
     ─▶ eventos SSE: `text` (narrativa), `a2ui` (un mensaje A2UI v1.0 cada uno), `done`.
 
 Cada evento lleva una "parte" con la misma forma que usa A2A para transportar A2UI:
@@ -20,6 +20,7 @@ Las acciones no pasan por el LLM: se recalculan en Python.
 from __future__ import annotations
 
 import logging
+import re
 import time
 from collections.abc import AsyncIterator
 from datetime import date
@@ -36,9 +37,10 @@ from fastapi.sse import ServerSentEvent
 
 from .actions import UnknownActionError, handle_action
 from .binder import BindingError, bind_surface, fallback_structure, normalize_structure
+from .catalogs import InferenceFormat
 from .finance import FinanceAnalytics, build_dataset
 from .llm import LlmClient, LlmError
-from .prompts import build_retry_prompt, build_system_prompt, build_user_prompt
+from .prompts import BLOCK_TAGS, build_retry_prompt, build_system_prompt, build_user_prompt
 from .protocol import A2UI_MIME_TYPE, AgentRequest
 
 log = logging.getLogger("finance_agent")
@@ -62,9 +64,27 @@ def _error(message: str, code: str = "AGENT_ERROR") -> ServerSentEvent:
     return _event("error", {"code": code, "message": message})
 
 
+_A2UI_BLOCK = re.compile(r"<(a2ui(?:-json)?)>(.*?)</\1>", re.DOTALL)
+
+
+def _a2ui_block(text: str) -> str | None:
+    """El bloque A2UI de una respuesta del modelo (`<a2ui>` o `<a2ui-json>`), sin las etiquetas."""
+    match = _A2UI_BLOCK.search(text)
+    return match.group(2).strip() if match else None
+
+
 class FinanceAgent:
-    def __init__(self, generator: A2uiGenerator, llm: LlmClient | None, *, expose_llm_output: bool = True) -> None:
+    def __init__(
+        self,
+        generator: A2uiGenerator,
+        llm: LlmClient | None,
+        *,
+        expose_llm_output: bool = True,
+        inference_format: InferenceFormat = "express",
+    ) -> None:
         self.generator = generator
+        #: Formato en que escribe Gemini (el del `generator`): "express" o "json".
+        self.inference_format = inference_format
         #: Catálogos que el agente ofrece (los mismos con los que valida lo que escribe Gemini).
         self.catalogs = [config.transformed_catalog for config in generator.catalogs]
         self.llm = llm
@@ -140,19 +160,21 @@ class FinanceAgent:
             yield _error(f"El navegador no soporta los catálogos de este agente: {exc}", "CATALOG_MISMATCH")
             return
 
-        system = build_system_prompt(processor.prompt_snippet)
+        fmt = self.inference_format
+        system = build_system_prompt(processor.prompt_snippet, fmt)
         user = build_user_prompt(analytics.build_context(account), request.text or "")
         structure: list[dict[str, Any]] = []
+        raw: list[str] = []  # lo que escribió Gemini, tal cual (para el panel "Ver protocolo A2UI")
         served: dict[str, Any] = {}  # lo que Google confirma: modelo que atendió y tokens
         retries = 0
         fallback = False
 
         # 1) Streaming: la narrativa sale al instante; la estructura se acumula y se valida.
         try:
-            async for event in self._stream_attempt(processor, system, user, structure, served):
+            async for event in self._stream_attempt(processor, system, user, structure, served, raw):
                 yield event
             if not structure:
-                raise A2uiError("La respuesta no traía ningún bloque <a2ui-json>.")
+                raise A2uiError(f"La respuesta no traía ningún bloque <{BLOCK_TAGS[fmt]}>.")
         except LlmError as exc:
             yield _error(str(exc), "LLM_ERROR")
             return
@@ -161,7 +183,8 @@ class FinanceAgent:
             retries = 1
             log.info("Bloque A2UI inválido, reintentando: %s", exc)
             yield _event("thought", {"text": "Corrigiendo la pantalla para que cumpla el catálogo…"})
-            structure = await self._retry(processor, system, build_retry_prompt(user, str(exc)))
+            structure, retry_text = await self._retry(processor, system, build_retry_prompt(user, str(exc), fmt))
+            raw[:] = [retry_text]
             if not structure:
                 fallback = True
                 structure = fallback_structure(request.text or "")
@@ -187,9 +210,11 @@ class FinanceAgent:
             **served,  # servedModel / serviceTier / usage: lo que respondió Google
             "retries": retries,
             "fallback": fallback,
+            "inferenceFormat": fmt,
         }
         if self.expose_llm_output:
-            done["llmOutput"] = structure  # lo que escribió Gemini, antes de que Python completara los datos
+            done["llmOutput"] = structure  # la estructura ya en JSON, antes de que Python completara los datos
+            done["llmRaw"] = _a2ui_block("".join(raw))  # el bloque tal cual lo escribió Gemini (Express o JSON)
         yield _event("done", done)
 
     async def _stream_attempt(
@@ -199,6 +224,7 @@ class FinanceAgent:
         user: str,
         structure: list[dict[str, Any]],
         served: dict[str, Any],
+        raw: list[str],
     ) -> AsyncIterator[ServerSentEvent]:
         stream = processor.open_stream()
         try:
@@ -209,6 +235,7 @@ class FinanceAgent:
                 if chunk.kind == "served":
                     served.update(chunk.info or {})
                     continue
+                raw.append(chunk.text)
                 for event in self._parts_to_events(stream.feed(chunk.text), structure):
                     yield event
             for event in self._parts_to_events(stream.close(), structure):
@@ -220,18 +247,22 @@ class FinanceAgent:
             structure.clear()
             raise
 
-    async def _retry(self, processor: A2uiRequestProcessor, system: str, user: str) -> list[dict[str, Any]]:
+    async def _retry(
+        self, processor: A2uiRequestProcessor, system: str, user: str
+    ) -> tuple[list[dict[str, Any]], str]:
+        """Reintento sin streaming: devuelve la estructura (vacía si falla) y el texto crudo."""
+        text = ""
         try:
             text = await self.llm.complete(system=system, user=user)
             parts = processor.parse_response(text)
         except (LlmError, A2uiError) as exc:
             log.warning("El reintento también falló: %s", exc)
-            return []
+            return [], text
         structure: list[dict[str, Any]] = []
         for part in parts:
             if isinstance(part, A2uiPart):
                 structure.extend(to_message_dicts(part.a2ui))
-        return structure
+        return structure, text
 
     @staticmethod
     def _parts_to_events(parts: list, structure: list[dict[str, Any]]) -> list[ServerSentEvent]:

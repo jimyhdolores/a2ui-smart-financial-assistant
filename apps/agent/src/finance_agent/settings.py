@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     a2ui_catalog_dir: Path = DEFAULT_CATALOG_DIR
     #: Si es true, el evento `done` incluye el bloque A2UI que escribió Gemini (útil para la charla).
     expose_llm_output: bool = True
+    #: Cómo escribe Gemini la pantalla: "express" (formato compacto de A2UI 1.0) o "json" (Direct JSON).
+    #: El navegador recibe el mismo JSON v1.0 en ambos casos: el SDK traduce.
+    a2ui_inference_format: Literal["express", "json"] = "express"
 
 
 @lru_cache

@@ -8,11 +8,11 @@ from finance_agent.main import create_app
 from finance_agent.protocol import BASIC_CATALOG_ID, FINANCE_CATALOG_ID
 from finance_agent.settings import Settings
 
-from .conftest import CAPABILITIES, FakeLlm, example, llm_response, parse_sse, wrap_in_card
+from .conftest import PROMPT_MARKERS, CAPABILITIES, FakeLlm, example, llm_response, parse_sse, wrap_in_card
 
 
-def _client(llm: FakeLlm | None) -> TestClient:
-    settings = Settings(gemini_api_key=None, _env_file=None)
+def _client(llm: FakeLlm | None, fmt: str = "express") -> TestClient:
+    settings = Settings(gemini_api_key=None, a2ui_inference_format=fmt, _env_file=None)
     return TestClient(create_app(settings=settings, llm=llm))
 
 
@@ -24,20 +24,22 @@ def _ask(client: TestClient, text: str, capabilities=CAPABILITIES):
     return parse_sse(response.text)
 
 
-def test_health():
-    with _client(FakeLlm("")) as client:
+def test_health(fmt):
+    with _client(FakeLlm(""), fmt) as client:
         health = client.get("/api/health").json()
     assert health["a2uiVersion"] == "1.0"
     assert health["mimeType"] == "application/a2ui+json"
     assert health["catalogs"] == [BASIC_CATALOG_ID, FINANCE_CATALOG_ID]
+    assert health["inferenceFormat"] == fmt
+    assert health["a2uiSdk"].startswith("0.11.")
 
 
-def test_turno_completo():
+def test_turno_completo(fmt):
     llm = FakeLlm(
-        llm_response("Este mes lo que más pesa es la comida rápida.", example("resumen-del-mes")),
+        llm_response("Este mes lo que más pesa es la comida rápida.", example("resumen-del-mes"), fmt),
         thoughts=("Revisando las categorías del mes",),
     )
-    with _client(llm) as client:
+    with _client(llm, fmt) as client:
         events = _ask(client, "Hazme un resumen de mi mes")
 
     names = [name for name, _ in events]
@@ -65,17 +67,19 @@ def test_turno_completo():
     assert done["servedModel"] == "fake-gemini" and done["usage"]["thought"] == 800
     # El modelo recibió el contexto calculado por Python, no los movimientos crudos.
     assert "Gasto del mes" in llm.calls[0]["user"]
-    assert "---BEGIN A2UI JSON SCHEMA---" in llm.calls[0]["system"]
+    assert PROMPT_MARKERS[fmt] in llm.calls[0]["system"]
+    # Lo que escribió Gemini, tal cual, para el panel "Ver protocolo A2UI".
+    assert done["inferenceFormat"] == fmt
+    assert ('surface("main")' if fmt == "express" else '"createSurface"') in done["llmRaw"]
 
 
-def test_bloque_invalido_se_reintenta_citando_el_error():
-    invalid = example("pagos-con-yape")
-    invalid[1]["updateComponents"]["components"][1]["component"] = "AppLoQueSea"  # fuera de la lista blanca
-    llm = FakeLlm(
-        llm_response("Aquí tienes tus pagos.", invalid),
-        retry=llm_response("Corregido.", example("pagos-con-yape")),
+def test_bloque_invalido_se_reintenta_citando_el_error(fmt):
+    # Un widget fuera de la lista blanca (vale para los dos formatos: es el nombre de la pieza).
+    invalid = llm_response("Aquí tienes tus pagos.", example("pagos-con-yape"), fmt).replace(
+        "AppMovementsTable", "AppLoQueSea"
     )
-    with _client(llm) as client:
+    llm = FakeLlm(invalid, retry=llm_response("Corregido.", example("pagos-con-yape"), fmt))
+    with _client(llm, fmt) as client:
         events = _ask(client, "Solo mis Yape")
     done = events[-1][1]
     assert done["retries"] == 1 and done["fallback"] is False
@@ -84,13 +88,13 @@ def test_bloque_invalido_se_reintenta_citando_el_error():
     assert any(c["component"] == "AppMovementsTable" for c in components)
 
 
-def test_widget_mal_anidado_se_reintenta_citando_la_regla():
+def test_widget_mal_anidado_se_reintenta_citando_la_regla(fmt):
     """Un widget dentro de una Card rompe allowedParents: el SDK lo rechaza y Gemini corrige."""
     llm = FakeLlm(
-        llm_response("Aquí tienes tus pagos.", wrap_in_card(example("pagos-con-yape"), "table")),
-        retry=llm_response("Corregido.", example("pagos-con-yape")),
+        llm_response("Aquí tienes tus pagos.", wrap_in_card(example("pagos-con-yape"), "table"), fmt),
+        retry=llm_response("Corregido.", example("pagos-con-yape"), fmt),
     )
-    with _client(llm) as client:
+    with _client(llm, fmt) as client:
         events = _ask(client, "Solo mis Yape")
     done = events[-1][1]
     assert done["retries"] == 1 and done["fallback"] is False

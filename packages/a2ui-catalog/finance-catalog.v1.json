@@ -5,7 +5,7 @@
   "title": "Catálogo de finanzas · Fintech Nano",
   "description": "Los 7 widgets del asistente financiero. Cada campo acepta un literal o un binding {\"@path\": \"/…\"} al modelo de datos de la superficie.",
   "catalogId": "https://a2ui-smart-financial-assistant/catalogs/finance/v1_0",
-  "instructions": "Widgets de finanzas: cada uno es una tarjeta completa que calcula sus cifras en el servidor del agente. Al usarlos escribe solo id, component, catalogId, opcionalmente title y los parámetros que indique su descripción. Nunca escribas data ni cifras: el servidor las completa. Cada widget va como hijo directo de la Column raíz, nunca dentro de una Card ni de una Row.",
+  "instructions": "Widgets de finanzas: cada uno es una tarjeta completa que calcula sus cifras en el servidor del agente. Al usarlos escribe solo title (opcional) y los parámetros que indique su descripción. Nunca escribas data ni cifras: el servidor las completa. Cada widget va como hijo directo de la Column raíz, nunca dentro de una Card ni de una Row.",
   "components": {
     "AppQuickStats": {
       "type": "object",

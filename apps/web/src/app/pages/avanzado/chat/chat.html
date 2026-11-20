@@ -29,7 +29,12 @@
         </span>
       } @else if (remote.health(); as h) {
         <span class="mode-status ok">
-          <mat-icon>lock</mat-icon>A2UI {{ h.a2uiVersion }} · {{ h.mimeType }} · la API key no sale del servidor
+          <mat-icon>lock</mat-icon>A2UI {{ h.a2uiVersion }} ·
+          {{ h.inferenceFormat === 'json' ? 'Gemini escribe JSON' : 'Gemini escribe en Express' }}
+          @if (h.a2uiSdk) {
+            · SDK {{ h.a2uiSdk }}
+          }
+          · la API key no sale del servidor
         </span>
       }
     }
@@ -184,7 +189,12 @@
                     @if (m.origin === 'server') {
                       @if (m.raw) {
                         <p class="json-label">
-                          Lo que escribió Gemini (solo la estructura, sin una cifra):
+                          @if (m.rawFormat === 'express') {
+                            Lo que escribió Gemini en A2UI Express, el formato compacto de 1.0 (solo la
+                            estructura, sin una cifra; el SDK lo traduce al JSON de abajo):
+                          } @else {
+                            Lo que escribió Gemini (solo la estructura, sin una cifra):
+                          }
                         </p>
                         <pre>{{ m.raw }}</pre>
                       }

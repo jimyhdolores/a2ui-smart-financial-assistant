@@ -42,6 +42,8 @@ interface ChatMessage {
   a2uiStream?: string;
   /** Salida cruda del modelo: el enrutado de Nano (local) o la estructura de Gemini (servidor). */
   raw?: string;
+  /** En modo servidor: en qué formato escribió Gemini `raw` (A2UI Express o JSON). */
+  rawFormat?: 'express' | 'json';
   /** Duración del turno, en ms. */
   durationMs?: number;
   /** Modelo que pedimos (configuración del servidor). */
@@ -330,7 +332,14 @@ export class Chat {
       assistant.servedModel = done.servedModel ?? undefined;
       assistant.usage = done.usage;
       assistant.a2uiStream = received.join('\n');
-      if (done.llmOutput) assistant.raw = JSON.stringify(done.llmOutput, null, 2);
+      // Express se enseña tal cual lo escribió Gemini; JSON, formateado para leerlo.
+      if (done.inferenceFormat === 'express' && done.llmRaw) {
+        assistant.raw = done.llmRaw;
+        assistant.rawFormat = 'express';
+      } else if (done.llmOutput) {
+        assistant.raw = JSON.stringify(done.llmOutput, null, 2);
+        assistant.rawFormat = 'json';
+      }
       if (done.fallback) assistant.note = 'El modelo no logró una pantalla válida: se muestra la de respaldo.';
       else if (done.retries) assistant.note = 'El servidor corrigió la primera respuesta del modelo (1 reintento).';
     } catch (err) {

@@ -13,6 +13,10 @@ export interface AgentHealth {
   llmConfigured: boolean;
   a2uiVersion: string;
   mimeType: string;
+  /** Cómo escribe Gemini la pantalla: formato compacto de A2UI 1.0 o JSON directo. */
+  inferenceFormat?: 'express' | 'json';
+  /** Versión de `a2ui-agent-sdk` (el SDK oficial de A2UI en Python). */
+  a2uiSdk?: string;
   catalogs: string[];
 }
 
@@ -37,8 +41,12 @@ export interface AgentDone {
   usage?: AgentUsage;
   retries?: number;
   fallback?: boolean;
-  /** La estructura que escribió Gemini, antes de que Python completara los datos. */
+  /** La estructura que escribió Gemini, ya en JSON v1.0, antes de que Python completara los datos. */
   llmOutput?: unknown;
+  /** El bloque tal cual lo escribió Gemini (en A2UI Express o en JSON). */
+  llmRaw?: string | null;
+  /** Formato en que escribió Gemini este turno. */
+  inferenceFormat?: 'express' | 'json';
 }
 
 /**

@@ -6,7 +6,9 @@ from datetime import date
 from pathlib import Path
 
 import pytest
+from a2ui.inference_formats import ExpressParser, to_message_models
 
+from finance_agent.catalogs import load_catalogs
 from finance_agent.finance import FinanceAnalytics, build_dataset
 from finance_agent.llm import LlmChunk
 from finance_agent.protocol import BASIC_CATALOG_ID, FINANCE_CATALOG_ID
@@ -30,9 +32,28 @@ def wrap_in_card(structure: list[dict], widget_id: str) -> list[dict]:
     return structure
 
 
-def llm_response(narrative: str, structure: list[dict]) -> str:
-    """Respuesta "como la escribiría Gemini": una frase y un bloque <a2ui-json>."""
+def llm_response(narrative: str, structure: list[dict], fmt: str = "json") -> str:
+    """Respuesta "como la escribiría Gemini": una frase y un bloque A2UI en el formato pedido.
+
+    - "json":    <a2ui-json>[…mensajes v1.0…]</a2ui-json>
+    - "express": <a2ui>surface("main") / root = Column([...]) …</a2ui>, generado con el
+      decompilador oficial a partir de los mismos mensajes.
+    """
+    if fmt == "express":
+        catalogs = [config.transformed_catalog for config in load_catalogs(DEFAULT_CATALOG_DIR)]
+        block = ExpressParser(catalogs).decompile(to_message_models(structure))
+        return f"{narrative}\n<a2ui>\n{block}\n</a2ui>"
     return f"{narrative}\n<a2ui-json>\n{json.dumps(structure, ensure_ascii=False)}\n</a2ui-json>"
+
+
+#: Marca que el prompt del SDK incluye según el formato (prueba de que el contrato viene del SDK).
+PROMPT_MARKERS = {"express": "A2UI Express DSL Output Contract", "json": "---BEGIN A2UI JSON SCHEMA---"}
+
+
+@pytest.fixture(params=["express", "json"])
+def fmt(request) -> str:
+    """Formato en que escribe Gemini: los tests de turno corren con los dos."""
+    return request.param
 
 
 class FakeLlm:
