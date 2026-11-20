@@ -4,6 +4,7 @@ import type { ActionPayload } from '@a2ui/web_core';
 import { Subject } from 'rxjs';
 
 import { A2UI_MIME_TYPE, A2UI_VERSION, type A2uiMessage } from '../models/a2ui-protocol';
+import { A2uiRendererErrorsService } from './a2ui-renderer-errors';
 import { FinanceDataService } from './finance-data';
 
 /** Lo que el agente cuenta de sí mismo en `GET /api/health`. */
@@ -90,16 +91,18 @@ export class AgentError extends Error {
  * ║  evento `a2ui` trae UN mensaje A2UI v1.0 (application/a2ui+json) que     ║
  * ║  se entrega al MISMO renderer que usa el modo local:                    ║
  * ║                                                                       ║
- * ║      renderer.processMessages([mensaje])   ← la línea que no cambia     ║
+ * ║      a2uiErrors.apply([mensaje])   ← la misma puerta que el modo local  ║
  * ║                                                                       ║
- * ║  Lo que el renderer no pueda pintar se le devuelve al agente como un    ║
- * ║  mensaje `error` (la validación en los dos lados de la frontera).       ║
+ * ║  Lo que el renderer no pueda pintar se anota bajo su superficie y se    ║
+ * ║  le devuelve al agente como un mensaje `error` (la validación en los    ║
+ * ║  dos lados de la frontera).                                            ║
  * ╚═══════════════════════════════════════════════════════════════════════╝
  */
 @Injectable({ providedIn: 'root' })
 export class RemoteAgentService {
   private readonly injector = inject(Injector);
   private readonly finance = inject(FinanceDataService);
+  private readonly a2uiErrors = inject(A2uiRendererErrorsService);
 
   /** Base de la API. En desarrollo el proxy de Angular la reenvía al servidor Python. */
   readonly baseUrl = '/api';
@@ -228,6 +231,7 @@ export class RemoteAgentService {
     const msg = message as {
       createSurface?: { surfaceId: string };
       updateComponents?: { surfaceId: string };
+      updateDataModel?: { surfaceId: string };
     };
     const created = msg.createSurface?.surfaceId;
     if (created) {
@@ -236,7 +240,9 @@ export class RemoteAgentService {
     }
 
     // Uno a uno: si un mensaje falla, los demás se siguen aplicando (lo pide la spec).
-    const errors = this.renderer.processor.processMessagesWithErrors([message]);
+    // El rechazo queda anotado bajo su superficie, igual que en el modo local.
+    const surfaceId = created ?? msg.updateComponents?.surfaceId ?? msg.updateDataModel?.surfaceId;
+    const errors = this.a2uiErrors.apply([message], surfaceId);
     handlers.onA2ui?.(message, raw);
 
     // La superficie se muestra cuando ya tiene estructura (su componente `root`).
@@ -244,7 +250,6 @@ export class RemoteAgentService {
     if (structured && this.pendingSurfaces.delete(structured)) handlers.onSurface?.(structured);
 
     for (const error of errors) {
-      console.warn('[A2UI] El renderer rechazó un mensaje del servidor:', error);
       void this.post({ a2ui: error, metadata: this.metadata() }, {}).catch(() => undefined);
     }
   }
