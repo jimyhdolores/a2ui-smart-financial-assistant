@@ -68,12 +68,14 @@ Lo que trae, en corto:
 | **Reglas de anidamiento** | El catálogo dice **dónde** puede ir cada pieza, no solo qué piezas existen |
 | **Pantallas que se dibujan mientras llegan** | No hace falta esperar a la respuesta completa |
 
-**Qué usa esta demo:** el protocolo 1.0 con `@a2ui/angular` 0.14 y `@a2ui/web_core` 0.15, las últimas versiones publicadas en npm. Con el lanzamiento se añadieron dos cosas:
+**Qué usa esta demo:** el protocolo 1.0 con `@a2ui/angular` 0.14 y `@a2ui/web_core` 0.15 en el navegador (las últimas versiones publicadas en npm) y `a2ui-agent-sdk` 0.11 en el servidor. Con el lanzamiento se añadieron cuatro cosas:
 
-- **El visor dice "no" en voz alta.** Si un mensaje no cumple el catálogo, ya no falla en silencio: aparece _"El visor A2UI rechazó un mensaje"_ debajo de la pantalla afectada ([`a2ui-renderer-errors.ts`](apps/web/src/app/services/a2ui-renderer-errors.ts)).
-- **Reglas de anidamiento.** Cada widget del catálogo declara que solo puede ir como raíz de su superficie (`"allowedParents": ["Surface"]`).
+- **El visor dice "no" en voz alta.** Si un mensaje no cumple el catálogo, ya no falla en silencio: aparece _"El visor A2UI rechazó un mensaje"_ debajo de la pantalla afectada, en los dos modos ([`a2ui-renderer-errors.ts`](apps/web/src/app/services/a2ui-renderer-errors.ts)).
+- **Reglas de anidamiento.** Cada widget del catálogo declara dónde puede ir: como raíz de su superficie o directamente dentro de la columna principal (`"allowedParents": ["Surface", "Column"]`).
+- **Gemini escribe en _Express_.** En el servidor, el modelo escribe la pantalla en el formato compacto de 1.0 y el SDK la traduce al JSON de siempre. Se puede volver a JSON para compararlos ([ver abajo](#express-o-json-el-mismo-resultado-con-menos-texto)).
+- **El servidor valida lo que vuelve con el procesador oficial.** Las acciones y los errores que manda el navegador los comprueba el SDK de A2UI (`a2ui.rpc`), no código propio.
 
-**Qué queda pendiente:** los paquetes del visor que hay hoy en npm se publicaron justo antes del lanzamiento. La versión alineada al 100% con la especificación final (`web_core` 0.16 / `angular` 0.15) ya está en el repositorio de A2UI, pero aún no en npm. Escribe las claves reservadas con arroba (`@catalogId`, `@accessibility`, `@checks`) y trae la accesibilidad completa. Cuando se publique, la actualización será cambiar versiones.
+**Qué queda pendiente:** los paquetes del visor que hay hoy en npm se publicaron justo antes del lanzamiento. La versión alineada al 100% con la especificación final (`web_core` 0.16 / `angular` 0.15) ya está en el repositorio de A2UI, pero aún no en npm. Escribe las claves reservadas con arroba (`@catalogId`, `@accessibility`, `@checks`) y trae la accesibilidad completa. Por eso el servidor usa `a2ui-agent-sdk` 0.11 y no la 0.12: la 0.12 ya escribe esas arrobas y el visor publicado no las entiende. Cuando se publique el visor nuevo, la actualización será cambiar versiones en los dos lados a la vez.
 
 ### La decisión de arquitectura clave: híbrido LLM + matemática local
 
@@ -273,7 +275,7 @@ El catálogo tiene dos mitades:
 
 Las caras **viven solo en el cliente y nunca viajan** — son clases, no se pueden serializar. El emisor únicamente manda el string `"AppQuickStats"`. Si mandara `"AppLoQueSea"`, el renderer no lo encuentra y **no pinta nada**.
 
-Desde A2UI 1.0 el contrato también dice **dónde** puede ir cada pieza. Aquí cada widget lleva `"allowedParents": ["Surface"]`: solo puede ser la raíz de su superficie (`Surface` es el nombre reservado del "lienzo"). Si alguien lo metiera dentro de otra pieza, el visor lo rechaza con el error `UNALLOWED_PARENT`, y ese rechazo se ve bajo la superficie: el chat entrega los mensajes con `processMessagesWithErrors`, que procesa uno a uno y devuelve los errores en vez de romper el turno.
+Desde A2UI 1.0 el contrato también dice **dónde** puede ir cada pieza. Aquí cada widget lleva `"allowedParents": ["Surface", "Column"]`: puede ser la raíz de su superficie (así los pinta el modo local; `Surface` es el nombre reservado del "lienzo") o ir directamente dentro de una columna (así compone el servidor). Si Gemini mete un widget dentro de una `Card`, el SDK lo rechaza con `UNALLOWED_PARENT` antes de enviarlo y le pide corregir. Si algo así llegara al navegador, el visor también lo rechaza y el rechazo se ve bajo la superficie: el chat entrega los mensajes con `processMessagesWithErrors`, que procesa uno a uno y devuelve los errores en vez de romper el turno. La regla solo mira el padre directo: una `Card` que contiene una `Column` con un widget dentro sí pasa.
 
 Ahí está el modelo de seguridad completo: **lo que viaja son datos, nunca código ejecutable**, y el emisor puede _pedir_ pero no _ampliar_ la lista. Por eso podrías aceptar UI de un agente en el que no confías del todo: lo peor que puede hacer es pedir algo que no le diste.
 
@@ -306,7 +308,7 @@ En la pestaña **Asistente IA** del nivel Avanzado hay un interruptor: **"En tu 
 | Quién decide | Gemini Nano, dentro de Chrome | `gemini-4-argon` por la Gemini API (API key de AI Studio) |
 | Qué decide | Qué tarjetas mostrar (de 1 a 4) | La pantalla entera: orden, títulos, explicaciones, botones y tarjetas |
 | Quién pone los números | TypeScript, en el navegador | Python, en el servidor (la misma matemática, portada línea a línea) |
-| Cómo llega a la pantalla | `processMessages()` en memoria | Por la red, como eventos `a2ui` (`application/a2ui+json`) |
+| Cómo llega a la pantalla | `processMessagesWithErrors()` en memoria | Por la red, como eventos `a2ui` (`application/a2ui+json`) |
 | Quién pinta | El mismo renderer, el mismo catálogo, los mismos componentes | ← lo mismo |
 
 ### Qué cambia (y qué no)
@@ -344,18 +346,41 @@ event: done     {"model":"gemini-4-argon","servedModel":"gemini-4-argon","usage"
 
 ### El reparto: el modelo dibuja, Python pone el dinero
 
-1. **Gemini escribe la estructura** en A2UI: una columna, un título en Markdown, la tira de cifras, una frase que explica el reporte, botones de "siguiente pregunta"… De cada tarjeta de finanzas solo escribe su **intención** (por ejemplo `"filter": {"method": "yape"}`). Nunca escribe cifras.
-2. **El SDK oficial de A2UI** (`a2ui-agent-sdk`) arma el prompt a partir del catálogo, separa el texto del bloque A2UI y **valida** que el modelo solo use piezas permitidas. Si se equivoca, se le pide una vez que corrija citando el error; si vuelve a fallar, sale una pantalla de respaldo para que la demo nunca quede en blanco.
+1. **Gemini escribe la estructura** en A2UI Express: una columna, un título en Markdown, la tira de cifras, una frase que explica el reporte, botones de "siguiente pregunta"… De cada tarjeta de finanzas solo escribe su **intención** (por ejemplo `filter: {method: "yape"}`). Nunca escribe cifras.
+2. **El SDK oficial de A2UI** (`a2ui-agent-sdk`) arma el prompt a partir del catálogo, separa el texto del bloque A2UI, lo traduce a mensajes JSON v1.0 y **valida** que el modelo solo use piezas permitidas, en el sitio permitido. Si se equivoca, se le pide una vez que corrija citando el error; si vuelve a fallar, sale una pantalla de respaldo para que la demo nunca quede en blanco.
 3. **Python completa los punteros**: a cada tarjeta le pone `data: {"@path": "/<id>"}` y calcula sus números con la misma matemática del navegador ([`binder.py`](apps/agent/src/finance_agent/binder.py)). Un test compara las dos implementaciones cifra por cifra.
 
-Despliega **"Ver protocolo A2UI"** bajo una respuesta del servidor: arriba ves lo que escribió Gemini (sin un solo número) y abajo lo que llegó por la red (con los datos que puso Python).
+Despliega **"Ver protocolo A2UI"** bajo una respuesta del servidor: arriba ves lo que escribió Gemini en Express (sin un solo número) y abajo lo que llegó por la red (con los datos que puso Python).
+
+### Express o JSON: el mismo resultado con menos texto
+
+A2UI 1.0 trae un formato compacto, **Express**, pensado para que lo escriba un modelo. En vez de objetos JSON, Gemini escribe algo parecido a código:
+
+```text
+surface("main")
+root = Column([title, kpis, report])
+title = Text("## Tu mes en una mirada")
+kpis = AppQuickStats()
+report = AppSpendingReport("¿En qué se va tu dinero?")
+```
+
+El SDK lo traduce a los mismos mensajes JSON v1.0 que antes, así que el navegador no nota la diferencia. El formato se elige con `A2UI_INFERENCE_FORMAT` en `apps/agent/.env` (`express`, por defecto, o `json`), y la barra del chat dice cuál está en uso. Con la misma pregunta ("Hazme un resumen completo de mis finanzas de este mes", `gemini-4-argon`, una prueba de cada uno):
+
+| | Express | JSON |
+| --- | --- | --- |
+| Instrucciones que recibe el modelo (prompt del SDK) | ~23 000 caracteres | ~40 000 caracteres |
+| Tokens de entrada | 6 756 | 10 977 |
+| Tokens que escribe el modelo | 411 | 1 192 |
+| Tiempo del turno | 9,9 s | 16,2 s |
+
+Son medidas de una sola prueba: varían de una pregunta a otra, pero la proporción se mantiene porque Express repite mucho menos texto.
 
 ### La frontera de confianza
 
 - **La API key nunca llega al navegador**: vive en `apps/agent/.env` y solo la usa el servidor.
 - **El navegador decide qué acepta**: registra el catálogo de finanzas y un catálogo básico **recortado** (Text, Row, Column, Card, Button, Divider, Icon; y sin la función de abrir URLs). Lo que no esté ahí, no se pinta.
-- **Se valida en los dos lados**: el servidor valida antes de enviar; el navegador valida al recibir y, si algo no encaja, se lo devuelve al agente como un mensaje `error`.
-- **Las acciones vuelven al agente**: el simulador de gastos hormiga y los filtros de la tabla viajan como mensajes `action`, y el servidor responde con `updateDataModel` (sin pasar por el modelo). Los botones de seguimiento se convierten en una pregunta nueva del chat.
+- **Se valida en los dos lados**: el servidor valida antes de enviar; el navegador valida al recibir y, si algo no encaja, lo anota bajo la superficie y se lo devuelve al agente como un mensaje `error`.
+- **Las acciones vuelven al agente**: el simulador de gastos hormiga y los filtros de la tabla viajan como mensajes `action`. Los valida el procesador oficial del SDK (`RendererToAgentMessageProcessor`, de `a2ui.rpc`) contra el esquema de A2UI 1.0, y el servidor responde con `updateDataModel` (sin pasar por el modelo). Los botones de seguimiento se convierten en una pregunta nueva del chat.
 
 ---
 
@@ -600,6 +625,7 @@ La app está **instrumentada** para exponer cada llamada al modelo (ver [`GenUiS
 - **Componentes universales.** `provideA2UI` monta cada widget como _web component_ (`<a2ui-ng-appquickstats>`, …), el modo recomendado en v1.0. Como el gráfico se crea antes de que el navegador mida su contenedor, los gráficos circulares (plan de ahorro y asesor de crédito) llevan ancho fijo en [`chart-theme.ts`](apps/web/src/app/catalog/shared/chart-theme.ts).
 - **Dependencias pares:** `@a2ui/angular` 0.14 declara Angular `^21.2.5` (funciona con 22) y `@a2ui/markdown-it` 0.2.2 pide `@a2ui/web_core ^0.14` (solo usa sus tipos). Ambos avisos se aceptan de forma explícita en el `package.json` raíz (`pnpm.peerDependencyRules.allowedVersions`). Queda uno esperado: `ng-apexcharts` pide ApexCharts 5. La app ya no depende de `zod`: las librerías A2UI traen su propia copia.
 - **Presupuestos** (`angular.json`): _initial_ 1 MB warn / 1.5 MB error; _anyComponentStyle_ 6 kB warn / 8 kB error. El _bundle_ inicial ronda hoy los **1,34 MB** (~286 kB transferidos) porque el catálogo básico de A2UI (sus web components) se registra en la raíz; el build emite la advertencia del presupuesto de 1 MB (y la de los ~6,5 kB de estilos del chat) pero se completa correctamente. El Markdown de los `Text` se carga de forma perezosa (`provideMarkdownRenderer()` sin argumentos). `validate-color` (una dependencia CommonJS de `web_core`) está en `allowedCommonJsDependencies`.
+- **SDK de Python: `a2ui-agent-sdk` 0.11** (con `a2ui-core` 0.6), fijado como `>=0.11,<0.12` en `apps/agent/pyproject.toml`. Es la versión más nueva que encaja con el visor publicado: la 0.12 escribe `@catalogId` en cada pieza y `web_core` 0.15 no lo lee. Se sube junto con `web_core` 0.16 / `angular` 0.15 cuando estén en npm.
 - **Monorepo.** `pnpm-workspace.yaml` agrupa `apps/web` y `packages/*`; el front importa el contrato como `@fintech-nano/a2ui-catalog/finance-catalog.v1.json`. El agente Python no es un paquete de pnpm: lo maneja `uv` (`apps/agent/pyproject.toml`) y los scripts de la raíz lo llaman con `uv run --directory apps/agent …`.
 
 ---
@@ -633,6 +659,8 @@ pnpm --filter web watch    # Build incremental del front en modo desarrollo
 - [`a2ui-project/a2ui` en GitHub](https://github.com/a2ui-project/a2ui)
 - [SDK de agente en Python (`a2ui-agent-sdk`)](https://github.com/a2ui-project/a2ui/blob/main/python/a2ui_agent/agent_development.md) — catálogos, prompt generado, parser en streaming y validación (lo que usa `apps/agent`)
 - [Transportes de A2UI](https://a2ui.org/concepts/transports/) — A2A y AG-UI estables; HTTP/SSE aún sin estandarizar
+- [Formatos de inferencia](https://a2ui.org/concepts/inference-formats/) — Express frente a Direct JSON
+- [Changelog de `a2ui-agent-sdk`](https://github.com/a2ui-project/a2ui/blob/main/python/a2ui_agent/CHANGELOG.md) — qué trae la 0.11 (procesador `a2ui.rpc`) y por qué la 0.12 aún no encaja con el visor publicado
 
 ### Agente en el servidor (modo servidor)
 
