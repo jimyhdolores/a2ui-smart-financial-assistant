@@ -16,11 +16,15 @@ mínimo y explícito, calcado de cómo A2A lleva los metadatos:
 La respuesta es `text/event-stream`. Cada evento `a2ui` lleva UN mensaje A2UI v1.0
 envuelto como en A2A: `{"kind": "data", "metadata": {"mimeType": "application/a2ui+json"},
 "data": {…}}`. SSE no tiene Content-Type por evento: el tipo viaja en `metadata.mimeType`.
+
+El campo `a2ui` llega tal cual: lo valida el procesador oficial del SDK
+(`a2ui.rpc.RendererToAgentMessageProcessor`) contra el esquema `renderer_to_agent`
+de A2UI 1.0, en vez de un modelo propio.
 """
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -36,43 +40,6 @@ BASIC_COMPONENTS_ALLOWED = ("Text", "Row", "Column", "Card", "Button", "Divider"
 FOLLOW_UP_ACTION = "followUp"
 
 
-class RendererAction(BaseModel):
-    """`action` de un mensaje renderer→agente (A2UI v1.0)."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    name: str = Field(min_length=1, max_length=100)
-    surfaceId: str = Field(min_length=1, max_length=200)
-    sourceComponentId: str = Field(min_length=1, max_length=200)
-    timestamp: str
-    context: dict[str, Any] = Field(default_factory=dict)
-
-
-class RendererError(BaseModel):
-    """`error` que el renderer devuelve cuando no pudo aplicar un mensaje."""
-
-    model_config = ConfigDict(extra="allow")
-
-    code: str
-    message: str
-    surfaceId: str | None = None
-    path: str | None = None
-
-
-class RendererMessage(BaseModel):
-    """Mensaje renderer→agente: `{"version": "1.0", "action" | "error": …}`."""
-
-    version: Literal["1.0"]
-    action: RendererAction | None = None
-    error: RendererError | None = None
-
-    @model_validator(mode="after")
-    def _exactly_one(self) -> RendererMessage:
-        if (self.action is None) == (self.error is None):
-            raise ValueError("Un mensaje del renderer lleva exactamente uno de 'action' o 'error'.")
-        return self
-
-
 class RequestMetadata(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -84,7 +51,8 @@ class AgentRequest(BaseModel):
     """Cuerpo de `POST /api/agent`: o una pregunta (`text`) o un mensaje A2UI (`a2ui`)."""
 
     text: str | None = Field(default=None, min_length=1, max_length=500)
-    a2ui: RendererMessage | None = None
+    #: Mensaje renderer→agente (`action`, `error`, `callAgentFunction`…), sin validar aún.
+    a2ui: dict[str, Any] | None = None
     metadata: RequestMetadata
 
     @model_validator(mode="after")

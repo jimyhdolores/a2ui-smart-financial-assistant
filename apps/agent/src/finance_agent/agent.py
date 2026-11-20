@@ -12,7 +12,9 @@ Cada evento lleva una "parte" con la misma forma que usa A2A para transportar A2
 SSE no permite un Content-Type por evento (la respuesta entera es `text/event-stream`),
 así que el tipo de cada mensaje A2UI viaja, como en A2A, en `metadata.mimeType`.
 
-Las acciones del navegador (`a2ui.action`) no pasan por el LLM: se recalculan en Python.
+Los mensajes del navegador (`a2ui`: `action`, `error`, `callAgentFunction`) los
+valida y despacha el procesador oficial del SDK (`RendererToAgentMessageProcessor`).
+Las acciones no pasan por el LLM: se recalculan en Python.
 """
 
 from __future__ import annotations
@@ -26,7 +28,9 @@ from typing import Any
 from a2ui.core import A2uiError
 from a2ui.inference_formats import to_message_dicts
 from a2ui.parser import A2uiPart, TextPart
+from a2ui.core.schema.v1_0 import A2uiRendererActionMessage, A2uiRendererErrorMessage
 from a2ui.processor import A2uiGenerator, A2uiRequestProcessor
+from a2ui.rpc import RendererToAgentMessageProcessor
 from a2ui.utils import validate_payload
 from fastapi.sse import ServerSentEvent
 
@@ -61,6 +65,8 @@ def _error(message: str, code: str = "AGENT_ERROR") -> ServerSentEvent:
 class FinanceAgent:
     def __init__(self, generator: A2uiGenerator, llm: LlmClient | None, *, expose_llm_output: bool = True) -> None:
         self.generator = generator
+        #: Catálogos que el agente ofrece (los mismos con los que valida lo que escribe Gemini).
+        self.catalogs = [config.transformed_catalog for config in generator.catalogs]
         self.llm = llm
         self.expose_llm_output = expose_llm_output
 
@@ -88,20 +94,39 @@ class FinanceAgent:
     # ─── Mensajes del renderer: acciones y errores ──────────────────────────
 
     async def _renderer_message(self, request, analytics, account, started) -> AsyncIterator[ServerSentEvent]:
-        message = request.a2ui
-        if message.error is not None:
+        """Un mensaje renderer→agente, validado y despachado por el procesador oficial del SDK."""
+        replies: list[dict[str, Any]] = []
+        outcome: dict[str, Any] = {}
+
+        def on_action(message: A2uiRendererActionMessage) -> None:
+            action = message.action
+            replies.extend(handle_action(action, analytics=analytics, account=account))
+            outcome.update(kind="action", action=action.name)
+
+        def on_error(message: A2uiRendererErrorMessage) -> None:
             # Segunda mitad de la validación en dos fases: el navegador nos avisa de lo que no pudo pintar.
-            log.warning("El renderer rechazó un mensaje: %s", message.error.model_dump())
-            yield _event("done", {"durationMs": self._ms(started), "kind": "error-ack"})
-            return
+            log.warning("El renderer rechazó un mensaje: %s", message.error.model_dump(by_alias=True, exclude_none=True))
+            outcome.update(kind="error-ack")
+
+        rpc = RendererToAgentMessageProcessor(self.catalogs, on_action=on_action, on_error=on_error)
         try:
-            messages = handle_action(message.action, analytics=analytics, account=account)
+            result = await rpc.process_message(request.a2ui)
         except UnknownActionError as exc:
             yield _error(str(exc), "UNKNOWN_ACTION")
             return
-        for msg in messages:
+        except A2uiError as exc:
+            yield _error(f"Mensaje del renderer inválido: {exc}", "INVALID_RENDERER_MESSAGE")
+            return
+        if not result.handled:
+            yield _error("Este agente no atiende ese tipo de mensaje del renderer.", "UNSUPPORTED_RENDERER_MESSAGE")
+            return
+
+        for msg in replies:
             yield _a2ui_event(msg)
-        yield _event("done", {"durationMs": self._ms(started), "kind": "action", "action": message.action.name})
+        # Respuestas del propio SDK, p. ej. `agentFunctionResponse` a un `callAgentFunction`.
+        for reply in result.replies:
+            yield _a2ui_event(reply.model_dump(by_alias=True, exclude_unset=True))
+        yield _event("done", {"durationMs": self._ms(started), "kind": "renderer-message", **outcome})
 
     # ─── Un turno de conversación ───────────────────────────────────────────
 

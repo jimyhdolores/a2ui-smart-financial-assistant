@@ -3,18 +3,21 @@
 from __future__ import annotations
 
 import pytest
+from a2ui.core.schema.v1_0 import A2uiRendererAction
 
 from finance_agent.actions import UnknownActionError, handle_action
-from finance_agent.protocol import RendererAction
 
 
-def _action(name: str, context: dict, source: str = "table") -> RendererAction:
-    return RendererAction(
-        name=name,
-        surfaceId="srv-1234abcd",
-        sourceComponentId=source,
-        timestamp="2026-11-06T12:00:00Z",
-        context=context,
+def _action(name: str, context: dict, source: str = "table") -> A2uiRendererAction:
+    """La acción tal como la entrega el procesador del SDK (validada contra A2UI 1.0)."""
+    return A2uiRendererAction.model_validate(
+        {
+            "name": name,
+            "surfaceId": "srv-1234abcd",
+            "sourceComponentId": source,
+            "timestamp": "2026-11-06T12:00:00Z",
+            "context": context,
+        }
     )
 
 

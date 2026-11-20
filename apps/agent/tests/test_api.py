@@ -134,6 +134,50 @@ def test_sin_api_key_las_acciones_siguen_funcionando():
     assert events[-1] == ("done", events[-1][1]) and events[-1][1]["kind"] == "action"
 
 
+def _send_a2ui(client: TestClient, message: dict) -> list[tuple[str, object]]:
+    body = {"a2ui": message, "metadata": {"a2uiRendererCapabilities": CAPABILITIES, "accountId": "debito-principal"}}
+    return parse_sse(client.post("/api/agent", json=body).text)
+
+
+def test_accion_sin_context_la_rechaza_el_procesador_del_sdk():
+    """En A2UI 1.0 `context` es obligatorio: lo valida el procesador oficial, no un modelo propio."""
+    action = {"version": "1.0", "action": {"name": "filterMovements", "surfaceId": "srv-1", "sourceComponentId": "table",
+                                           "timestamp": "2026-11-06T12:00:00Z"}}
+    with _client(None) as client:
+        events = _send_a2ui(client, action)
+    assert events == [("error", events[0][1])]
+    assert events[0][1]["code"] == "INVALID_RENDERER_MESSAGE"
+
+
+def test_accion_desconocida_por_la_api():
+    action = {"version": "1.0", "action": {"name": "borrarTodo", "surfaceId": "srv-1", "sourceComponentId": "table",
+                                           "timestamp": "2026-11-06T12:00:00Z", "context": {}}}
+    with _client(None) as client:
+        events = _send_a2ui(client, action)
+    assert events[0][0] == "error" and events[0][1]["code"] == "UNKNOWN_ACTION"
+
+
+def test_el_agente_acusa_recibo_de_un_error_del_renderer():
+    error = {"version": "1.0", "error": {"code": "UNALLOWED_PARENT", "surfaceId": "srv-1", "path": "/components/2",
+                                         "message": "Component 'table' cannot be placed under parent 'box' (Card)."}}
+    with _client(None) as client:
+        events = _send_a2ui(client, error)
+    assert events == [("done", events[0][1])] and events[0][1]["kind"] == "error-ack"
+
+
+def test_funcion_del_agente_que_no_existe():
+    """`callAgentFunction` (nuevo en 1.0) lo responde el SDK aunque el catálogo no declare funciones."""
+    call = {"version": "1.0", "callAgentFunction": {"surfaceId": "srv-1", "functionCallId": "c1",
+                                                     "callFunction": {"@call": "tipoDeCambio", "args": {}}}}
+    with _client(None) as client:
+        events = _send_a2ui(client, call)
+    [(name, part), done] = events
+    assert name == "a2ui"
+    response = part["data"]["agentFunctionResponse"]
+    assert response["functionCallId"] == "c1" and response["error"]["code"] == "UNKNOWN_FUNCTION"
+    assert done[0] == "done"
+
+
 def test_peticion_mal_formada():
     with _client(FakeLlm("")) as client:
         response = client.post("/api/agent", json={"metadata": {"a2uiRendererCapabilities": {}, "accountId": "x"}})
