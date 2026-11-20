@@ -10,6 +10,16 @@
   },
   "private": true,
   "packageManager": "pnpm@9.15.4",
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "@a2ui/angular>@angular/core": "22",
+        "@a2ui/angular>@angular/common": "22",
+        "@a2ui/angular>@angular/platform-browser": "22",
+        "@a2ui/markdown-it>@a2ui/web_core": "0.15"
+      }
+    }
+  },
   "dependencies": {
     "@a2ui/angular": "^0.14.0",
     "@a2ui/markdown-it": "^0.2.2",
