@@ -536,6 +536,7 @@ pnpm start
 
 # 2b. Front + agente en el servidor (para el interruptor del nivel Avanzado)
 #     → antes, pon tu GEMINI_API_KEY en apps/agent/.env (ver abajo)
+#     Arranca primero el agente y, cuando /api/health responde, el front.
 pnpm dev
 ```
 
@@ -638,7 +639,7 @@ Desde la raíz del monorepo:
 pnpm install               # Instala el front y el agente Python (uv sync) en un solo paso
 pnpm setup:agent           # Solo prepara el agente Python (uv sync + .env si falta)
 pnpm start                 # Solo el front (ng serve) en http://localhost:4200/
-pnpm dev                   # Front + agente Python a la vez (el agente en http://127.0.0.1:8787)
+pnpm dev                   # Primero el agente (http://127.0.0.1:8787) y, cuando responde, el front
 pnpm dev:agent             # Solo el agente (fastapi dev, recarga en caliente)
 pnpm build                 # Build de producción del front en apps/web/dist/
 pnpm test:agent            # Tests del agente: paridad con el front, binder, acciones y API

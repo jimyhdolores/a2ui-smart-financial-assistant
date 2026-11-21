@@ -17,7 +17,7 @@
     "postinstall": "node scripts/setup-agent.mjs",
     "setup:agent": "node scripts/setup-agent.mjs",
     "start": "pnpm --filter web start",
-    "dev": "concurrently --kill-others-on-fail --names agente,web --prefix-colors magenta,cyan \"pnpm dev:agent\" \"pnpm dev:web\"",
+    "dev": "concurrently --kill-others-on-fail --names agente,web --prefix-colors magenta,cyan \"pnpm dev:agent\" \"node scripts/wait-agent.mjs && pnpm dev:web\"",
     "dev:web": "pnpm --filter web start",
     "dev:agent": "uv run --directory apps/agent fastapi dev --port 8787",
     "build": "pnpm --filter web build",
