@@ -1,3 +1,5 @@
+import { roundTo } from './number-format';
+
 /**
  * Lectura TOLERANTE del `data: Record<string, unknown>` que reciben los
  * componentes generativos. Como el `data` lo arma la app (y a veces lo influye
@@ -11,10 +13,11 @@ export function readStr(data: Record<string, unknown>, key: string, fallback = '
   return typeof v === 'string' && v.trim() ? v : fallback;
 }
 
+/** Número del `data`, redondeado a máximo 4 decimales (regla del proyecto). */
 export function readNum(data: Record<string, unknown>, key: string, fallback = 0): number {
   const v = data?.[key];
   const n = typeof v === 'string' ? Number(v) : v;
-  return typeof n === 'number' && !Number.isNaN(n) ? n : fallback;
+  return typeof n === 'number' && !Number.isNaN(n) ? roundTo(n) : fallback;
 }
 
 export function readBool(data: Record<string, unknown>, key: string, fallback = false): boolean {
