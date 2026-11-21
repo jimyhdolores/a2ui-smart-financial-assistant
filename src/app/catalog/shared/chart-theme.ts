@@ -12,6 +12,7 @@ import {
   ApexXAxis,
   ApexYAxis,
 } from 'ng-apexcharts';
+import { formatMoney } from './number-format';
 
 /**
  * ╔═══════════════════════════════════════════════════════════════════════╗
@@ -80,12 +81,22 @@ export function donutChart(labels: string[], values: number[]): ChartConfig {
           size: '68%',
           labels: {
             show: true,
-            total: { show: true, label: 'Total', fontFamily: FONT, fontWeight: 600 },
+            // Por defecto ApexCharts muestra el valor crudo y el total como suma
+            // sin formatear (p. ej. 555.6800000000001): ambos pasan por formatMoney.
+            value: { formatter: (v: number | string) => formatMoney(Number(v)) },
+            total: {
+              show: true,
+              label: 'Total',
+              fontFamily: FONT,
+              fontWeight: 600,
+              formatter: (w) =>
+                formatMoney((w.globals.seriesTotals as number[]).reduce((a, b) => a + b, 0)),
+            },
           },
         },
       },
     },
-    tooltip: { y: { formatter: (v: number) => `$${v.toFixed(2)}` } },
+    tooltip: { y: { formatter: (v: number) => formatMoney(v) } },
   };
 }
 
@@ -111,7 +122,7 @@ export function areaChart(categories: string[], values: number[], name = 'Gasto'
     grid: { borderColor: '#eceff4', strokeDashArray: 4 },
     xaxis: { categories, labels: { style: { fontFamily: FONT } } },
     yaxis: { labels: { formatter: (v: number) => `$${Math.round(v)}` } },
-    tooltip: { y: { formatter: (v: number) => `$${v.toFixed(2)}` } },
+    tooltip: { y: { formatter: (v: number) => formatMoney(v) } },
   };
 }
 
@@ -122,11 +133,11 @@ export function barChart(categories: string[], values: number[]): ChartConfig {
     colors: ['#f2a93b'],
     chart: { type: 'bar', height: 180, fontFamily: FONT, toolbar: { show: false } },
     plotOptions: { bar: { horizontal: true, borderRadius: 6, barHeight: '60%' } },
-    dataLabels: { enabled: true, formatter: (v: number) => `$${v}`, style: { fontFamily: FONT } },
+    dataLabels: { enabled: true, formatter: (v: number) => formatMoney(v), style: { fontFamily: FONT } },
     grid: { show: false },
     xaxis: { categories, labels: { show: false } },
     yaxis: { labels: { style: { fontFamily: FONT } } },
-    tooltip: { y: { formatter: (v: number) => `$${v.toFixed(2)}` } },
+    tooltip: { y: { formatter: (v: number) => formatMoney(v) } },
   };
 }
 

@@ -1,6 +1,7 @@
 import { Directive, inject } from '@angular/core';
 import { A2uiRendererService, CatalogComponent, type BoundProperty } from '@a2ui/angular';
 import type { ComponentApi } from '@a2ui/web_core';
+import { roundTo } from '../shared/number-format';
 
 /**
  * ╔═══════════════════════════════════════════════════════════════════════╗
@@ -33,10 +34,11 @@ export abstract class FinanceComponent<
     return typeof v === 'string' && v.trim() ? v : fallback;
   }
 
+  /** Número de la prop, redondeado a máximo 4 decimales (regla del proyecto). */
   protected num(key: string, fallback = 0): number {
     const v = this.raw(key);
     const n = typeof v === 'string' ? Number(v) : v;
-    return typeof n === 'number' && !Number.isNaN(n) ? n : fallback;
+    return typeof n === 'number' && !Number.isNaN(n) ? roundTo(n) : fallback;
   }
 
   protected bool(key: string, fallback = false): boolean {
